@@ -1,0 +1,308 @@
+<?xml version="1.0"?>
+<library>
+  <!--
+  If you are viewing this on GitHub and want to download it, right click on the RAW button
+  just above, and select "Save link as..."
+  -->
+
+  <!--
+  ShopLib is a basic shopping library for Quest.
+  
+  Version 1.2
+  Quest version: 5.6
+  Written by: The Pixie
+  
+  See here:
+  https://github.com/ThePix/quest/wiki/Shop-Library
+  -->
+
+
+  <delegate name="script_returns_price" type="int" />
+
+  <dynamictemplate name="TakeSuccessful">"You pick " + object.article + " up."</dynamictemplate>
+ //DynamicTemplate("MaxObjectsInInventory", object)
+
+
+
+  <dynamictemplate name="NotForSale">"Sorry " + GetDisplayName(object) + " is not for sale."</dynamictemplate>
+  <dynamictemplate name="CannotAfford">"You look longingly at " + GetDisplayName(object) + ", but you cannot afford it."</dynamictemplate>
+  <dynamictemplate name="BuySuccessful">"You buy " + GetDisplayName(object) + " for " + DisplayMoney(_GetBuyingPrice(object)) + "."</dynamictemplate>
+  <dynamictemplate name="SellSuccessful">"You sell " + GetDisplayName(object) + " for " + DisplayMoney(_GetSellingPrice(object)) + "."</dynamictemplate>
+  <dynamictemplate name="NotAShop">"Where do you think you are, a shop or something?"</dynamictemplate>
+  <dynamictemplate name="BuyOnly">"You cannot sell things here - only buy."</dynamictemplate>
+  <dynamictemplate name="NoPrice">"No one wants to buy " + GetDisplayName (object) + "."</dynamictemplate>
+  <dynamictemplate name="DoNotHaveToSell">"You do not have " + GetDisplayName (object) + "."</dynamictemplate>
+  <dynamictemplate name="NotBuyHere">"You can't buy " + game.buycommandtext + " here."</dynamictemplate>
+  <dynamictemplate name="ShopMenuHeader">"Item to purchase (have " + DisplayMoney(game.pov.money) + ")"</dynamictemplate>
+
+
+
+
+
+
+  <command name="buystuff">
+    <pattern>buy #text#;purchase #text#</pattern>
+    <script><![CDATA[
+      if (not HasObject(game.pov.parent, "shopstock")) {
+        msg (DynamicTemplate("NotAShop", game.pov))
+      }
+      else {
+        f = _ProcessScopeCommand ("DoBuy", GetStock (), text)
+        if (not f) {
+          game.buycommandtext = text
+          msg (DynamicTemplate("NotBuyHere", game))
+        }
+      }
+    ]]></script>
+  </command>
+  
+  <command name="buyfrommenu">
+    <pattern type="string">^buy$|^purchase$</pattern>
+    <script>
+      if (not HasObject(game.pov.parent, "shopstock")) {
+        msg (DynamicTemplate("NotAShop", game.pov))
+      }
+      else {
+        sl = NewStringDictionary ()
+        foreach (obj, GetStock ()) {
+          dictionary add (sl, obj.name, GetDisplayAlias (obj) + " (" + DisplayMoney(_GetBuyingPrice(obj)) + ")")
+        }
+        ShowMenu (DynamicTemplate("ShopMenuHeader", game), sl, true) {
+          if (not result = null) {
+            obj = GetObject (result)
+            DoBuy (obj)
+          }
+        } 
+      }
+    </script>
+  </command>
+
+  <!--
+  Do this as a command so we can sell anything with a price, regardless of type.
+  -->
+  <command name="sellstuff">
+    <pattern>sell #object#</pattern>
+    <script>
+      if (not object.parent = game.pov) {
+        msg (DynamicTemplate("DoNotHaveToSell", object))
+      }
+      else if (not HasObject(game.pov.parent, "shopstock")) {
+        msg (DynamicTemplate("NotAShop", game.pov))
+      }
+      else if (GetBoolean(game.pov.parent, "buyonly")) {
+        msg (DynamicTemplate("BuyOnly", game.pov))
+      }
+      else if (not HasInt(object, "price")) {
+        msg (DynamicTemplate("NoPrice", object))
+      }
+      else {
+        value = _GetSellingPrice(object)
+        game.pov.money = game.pov.money + value
+        msg (DynamicTemplate("SellSuccessful", object))
+        if (GetBoolean (object, "destroyonsale")) {
+          destroy (object.name)
+        }
+        else {
+          object.parent = game.pov.parent.shopstock
+        }
+        UpdateInventoryCounts
+      }
+    </script>
+    <unresolved>You want to sell what?</unresolved>
+  </command>
+  
+  <command name="selljunk">
+    <pattern>sell junk</pattern>
+    <script>
+      if (not HasObject(game.pov.parent, "shopstock")) {
+        msg (DynamicTemplate("NotAShop", game.pov))
+      }
+      else if (GetBoolean(game.pov.parent, "buyonly")) {
+        msg (DynamicTemplate("BuyOnly", game.pov))
+      }
+      else {
+        foreach (object, GetDirectChildren(game.pov)) {
+          if (GetBoolean (object, "destroyonsale")) {
+            if (HasInt(object, "price")) {
+              value = _GetSellingPrice(object)
+              game.pov.money = game.pov.money + value
+              P (DynamicTemplate("SellSuccessful", obj))
+              object.parent = dead
+            }
+          }
+        }
+      }
+      UpdateInventoryCounts
+    </script>
+    <unresolved>You want to sell what?</unresolved>
+  </command>
+  
+  
+  <function name="ShopInventory" type="string">
+    sl = NewStringList ()
+    foreach (obj, GetStock ()) {
+      list add (sl, GetDisplayName (obj) + " (" + DisplayMoney(_GetBuyingPrice(obj)) + ")")
+    }
+    return (Join (sl, ", "))
+  </function>
+
+
+  <function name="DoBuy" parameters="obj" type="boolean">
+      if (not HasInt (obj, "price")) {
+        msg (DynamicTemplate("NotForSale", obj))
+      }
+      else {
+        buyingprice = _GetBuyingPrice(obj)
+        if (buyingprice > game.pov.money) {
+          msg (DynamicTemplate("CannotAfford", obj))
+        }
+        else {
+          if (GetBoolean(obj, "cloneonpurchase")) {
+            CloneObjectAndMove(obj, game.pov)
+          }
+          else {
+            obj.parent = game.pov
+          }
+          game.pov.money = game.pov.money - buyingprice
+          UpdateInventoryCounts
+          P (DynamicTemplate("BuySuccessful", obj))
+        }
+      }
+      return (true)
+  </function>
+
+
+  <function name="_ProcessScopeCommand" parameters="func, scope, text" type="boolean"><![CDATA[
+    value = Trim (LCase (text))
+    fullmatches = NewObjectList()
+    partialmatches = NewObjectList()
+    foreach (obj, scope) {
+      name = LCase(GetDisplayAlias(obj))
+      CompareNames (name, value, obj, fullmatches, partialmatches)
+      if (obj.alt <> null) {
+        foreach (altname, obj.alt) {
+          CompareNames (LCase(altname), value, obj, fullmatches, partialmatches)
+        }
+      }
+    }
+    if (game.lastobjects <> null) {
+      foreach (obj, game.lastobjects) {
+        CompareNames (LCase(obj.article), value, obj, fullmatches, partialmatches)
+        CompareNames (LCase(obj.gender), value, obj, fullmatches, partialmatches)
+      }
+    }
+    if (ListCount(fullmatches) = 1) {
+      game.scopecommandpending = ListItem(fullmatches, 0)
+    }
+    else if (ListCount(fullmatches) = 0 and ListCount(partialmatches) = 1) {
+      game.scopecommandpending = ListItem(partialmatches, 0)
+    }
+    else if (ListCount(fullmatches) + ListCount(partialmatches) = 0) {
+      return (false)
+    }
+    else {
+      menu = NewStringDictionary()
+      GenerateMenuChoices (menu, fullmatches)
+      GenerateMenuChoices (menu, partialmatches)
+      show menu (DynamicTemplate("DisambiguateMenu", value), menu, true) {
+        if (result <> null) {
+          game.scopecommandpending = GetObject(result)
+        }
+        else {
+          return (false)
+        }
+      }
+    }
+    on ready {
+      if (game.scopecommandpending = null) {
+        return (false)
+      }
+      else {
+        return (eval (func + "(" + game.scopecommandpending.name + ")"))
+      }
+    }
+  ]]></function>
+
+
+  <!--
+  Lists all items in the stockroom of the current location (i.e., game.pov.parent.shopstock)
+  that have an interger attribute, "price". If there is no stockroom, an empty list
+  is returned.
+  -->
+  <function name="GetStock" type="objectlist">
+    ol = NewObjectList ()
+    if (HasObject (game.pov.parent, "shopstock")) {
+      foreach (obj, GetDirectChildren (game.pov.parent.shopstock)) {
+        if (HasInt (obj, "price")) {
+          list add (ol, obj)
+        }
+      }
+    }
+    return (ol)
+  </function>
+
+
+
+
+  <!--
+  Sets the mark up for buying goods across the world to be twice their price attribute.
+  -->
+  <function name="_GetBuyingPrice" parameters="obj" type="int"><![CDATA[
+    if (HasDelegateImplementation (obj, "buyingprice")) {
+      return (RunDelegateFunction(obj, "buyingprice"))
+    }
+    else {
+      return (BuyingPrice(obj.price))
+    }
+  ]]></function>
+
+  <!--
+  Sets the mark up for selling goods across the world to be their price attribute.
+  -->
+  <function name="_GetSellingPrice" parameters="obj" type="int"><![CDATA[
+    if (HasDelegateImplementation (obj, "sellingprice")) {
+      return (RunDelegateFunction(obj, "sellingprice"))
+    }
+    else {
+      return (SellingPrice(obj.price))
+    }
+  ]]></function>
+
+
+
+  
+  
+  
+  
+
+  <!--
+  Sets the mark up for buying goods across the world to be their price attribute.
+  -->
+  <function name="BuyingPrice" parameters="price" type="int"><![CDATA[
+    return (price)
+  ]]></function>
+
+  <!--
+  Sets the mark up for selling goods across the world to be their price attribute.
+  -->
+  <function name="SellingPrice" parameters="price" type="int"><![CDATA[
+    return (price)
+  ]]></function>
+
+  <function name="UpdateInventoryCounts">
+  </function>
+
+  <function name="DisplayMoney" parameters="value" type="string">
+    return ("" + value + " credits")
+  </function>
+
+  <!--
+  This gets called only when the action is successful; for text that is part of
+  the narrative. You can override this in your own code to flag that a command was successful
+  or to display narrative text differently to meta text.
+  -->
+	<function name="P" parameters="s">
+    msg(s)
+	</function>
+  
+</library>
