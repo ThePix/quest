@@ -156,6 +156,10 @@
         return (false)
       }
     }
+    
+    if (not TestGarment(object)) {
+      return (false)
+    }
 			
     WearGarment(object)
     if(object.wearmsg = null) {
@@ -183,7 +187,12 @@
   It will ensure it is in the player's inventory.
   -->
 	<function name="WearGarment" parameters="object"><![CDATA[
-    object.parent = game.pov
+    if (HasAttribute(game, "wornclothinglocation")) {
+      object.parent = game.wornclothinglocation
+    }
+    else {
+      object.parent = game.pov
+    }
     object.worn = True
     object.original_drop = object.drop
     object.original_alias = object.alias
@@ -248,6 +257,7 @@
     object.original_drop = null
     object.original_alias = null
     object.display = null
+    object.parent = game.pov
     if (game.feature_limitinventory and HasInt(game.pov, "maxobjects")) {
       game.pov.maxobjects = game.pov.maxobjects - 1
     }
@@ -589,6 +599,15 @@
   Override this in your combat library
   -->
   <function name="UpdateArmour"><![CDATA[
+	]]></function>
+
+
+  <!--
+  Override this in your game for custom testing, for
+  example to check the size is suitable.
+  -->
+  <function name="TestGarment" type="boolean" parameters="object"><![CDATA[
+    return (true)
 	]]></function>
 
 
