@@ -65,13 +65,18 @@ https://github.com/ThePix/quest/wiki/Clock-Library
   <turnscript>
     <enabled type="boolean">true</enabled>
     <script>
-      if (not game.notarealturn) {
-        for (i, 1, game_clock.increment) {
-          IncTime ()
-        }	
+      if (HasBoolean(game, "notarealturn")) {
+        if (not game.notarealturn) {
+          for (i, 1, game_clock.increment) {
+            IncTime ()
+          }	
+        }
+        game_clock.increment = 1
+        game.notarealturn = false
       }
-      game_clock.increment = 1
-      game.notarealturn = false
+      else {
+        this.enabled = false
+      }
     </script>
   </turnscript>
 
