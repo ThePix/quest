@@ -20,10 +20,6 @@
   <delegate name="script_returns_price" type="int" />
 
   <dynamictemplate name="TakeSuccessful">"You pick " + object.article + " up."</dynamictemplate>
- //DynamicTemplate("MaxObjectsInInventory", object)
-
-
-
   <dynamictemplate name="NotForSale">"Sorry " + GetDisplayName(object) + " is not for sale."</dynamictemplate>
   <dynamictemplate name="CannotAfford">"You look longingly at " + GetDisplayName(object) + ", but you cannot afford it."</dynamictemplate>
   <dynamictemplate name="BuySuccessful">"You buy " + GetDisplayName(object) + " for " + DisplayMoney(_GetBuyingPrice(object)) + "."</dynamictemplate>
@@ -36,17 +32,10 @@
   <dynamictemplate name="ShopMenuHeader">"Item to purchase (have " + DisplayMoney(game.pov.money) + ")"</dynamictemplate>
 
 
-
-
-
-
   <command name="buystuff">
     <pattern>buy #text#;purchase #text#</pattern>
     <script><![CDATA[
-      if (not HasObject(game.pov.parent, "shopstock")) {
-        msg (DynamicTemplate("NotAShop", game.pov))
-      }
-      else {
+      if (_PreBuy()) {
         f = _ProcessScopeCommand ("DoBuy", GetStock (), text)
         if (not f) {
           game.buycommandtext = text
@@ -59,10 +48,7 @@
   <command name="buyfrommenu">
     <pattern type="string">^buy$|^purchase$</pattern>
     <script>
-      if (not HasObject(game.pov.parent, "shopstock")) {
-        msg (DynamicTemplate("NotAShop", game.pov))
-      }
-      else {
+      if (_PreBuy()) {
         sl = NewStringDictionary ()
         foreach (obj, GetStock ()) {
           dictionary add (sl, obj.name, GetDisplayAlias (obj) + " (" + DisplayMoney(_GetBuyingPrice(obj)) + ")")
@@ -144,6 +130,29 @@
       list add (sl, GetDisplayName (obj) + " (" + DisplayMoney(_GetBuyingPrice(obj)) + ")")
     }
     return (Join (sl, ", "))
+  </function>
+
+
+  <function name="_PreBuy" type="boolean">
+    if (not HasObject(game.pov.parent, "shopstock")) {
+      msg (DynamicTemplate("NotAShop", game.pov))
+      return (false)
+    }
+    if (HasInt(game.pov, "maxobjects")) {
+      if (game.pov.maxobjects > 0) {
+        children = GetDirectChildren(game.pov)
+        if (ListCount(children) >= game.pov.maxobjects) {
+          if (HasString(game.pov, "containermaxobjects")) {
+            message = prefix + game.pov.containermaxobjects
+          }
+          else {
+            message = prefix + DynamicTemplate("MaxObjectsInInventory", object)
+          }
+          return (false)
+        }
+      }
+    }
+    return (true)
   </function>
 
 
