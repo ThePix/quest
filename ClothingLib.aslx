@@ -212,7 +212,7 @@
   
   
 	<function name="_DoRemove" parameters="object" type="boolean"><![CDATA[
-		if (not object.parent = game.pov) {
+		if (not ListContains(GetAllChildObjects(player), object)) {
 			msg ("You cannot; you do not have " + object.article + ".")
       return (false)
 		}
@@ -530,6 +530,10 @@
     return (GetArmourFor(game.pov))
 	</function>
   
+
+
+
+  <!--  CUSTOMISATION  -->
   
   
   <!--
@@ -540,41 +544,10 @@
   If the item can be removed in other ways, remember to call this.
   -->
 	<function name="SetBonuses" parameters="garment, wearflag">
-    if (GetBoolean(game, "feature_bonusgarments")) {
-      _SetBonuses (garment, wearflag)
-    }
 	</function>
   
 
 
-  <!--
-  An example of how set bonus could work (which you could just call from your SetBonus)
-  -->
-	<function name="_SetBonuses" parameters="garment, wearflag"><![CDATA[
-    if (HasString(garment, "bonusatts")) {
-      foreach (att, Split(garment.bonusatts, ",")) {
-        bonus = 1
-        plusarray = Split(att, "+")
-        minusarray = Split(att, "-")
-        if (ListCount(plusarray) = 2) {
-          att = StringListitem(plusarray, 0)
-          bonus = ToInt(StringListitem(plusarray, 1))
-        }
-        if (ListCount(minusarray) = 2) {
-          att = StringListitem(minusarray, 0)
-          bonus = -ToInt(StringListitem(minusarray, 1))
-        }
-        if (not wearflag) {
-          bonus = -bonus
-        }
-        n = GetInt(game.pov, att) + GarmentBonusMultiplier() * bonus
-        set (game.pov, att, n)
-      }
-    }
-	]]></function>
-
-  
-  <!--  CUSTOMISATION  -->
   
 
   <!--
