@@ -25,14 +25,26 @@
     <pattern>press;push</pattern>
     <defaultexpression>"You can't press " + object.article + "."</defaultexpression>
   </verb>
+  
+  
+  
 
   <type name="liftroom">
     <current_floor type="int">1</current_floor>
     <usage_count type="int">0</usage_count>
+    <lockexits type="boolean">false</lockexits>
     <goingup>The lift ascends to ###.</goingup>
     <goingdown>The lift descends to ###.</goingdown>
+    <leavingmsg type="string"></leavingmsg>
     <samefloor>Nothing happens. Perhaps because you are already on ###.</samefloor>
+    <onexit type="script">
+      if (not this.leavingmsg = "") P (this.leavingmsg)
+      LeavingTheLift
+    </onexit>
   </type>
+  
+  
+  
 
   <type name="liftbutton">
     <displayverbs type="simplestringlist">Press</displayverbs>
@@ -41,11 +53,15 @@
     <press type="script"><![CDATA[
       exit = ObjectListItem (ScopeExitsForRoom (this.parent), 0)
       current = exit.to
-      if (exit.to = this.to) {
+      current_button = null
+      foreach (o, GetDirectChildren(this.parent)) {
+        if (o.destination = current) current_button = o
+      }
+      if (exit.to = this.destination) {
         s = this.parent.samefloor
       }
       else {
-        exit.to = this.to
+        exit.to = this.destination
         if (this.parent.current_floor > this.floor) {
           s = this.parent.goingdown
         }
@@ -53,8 +69,10 @@
           s = this.parent.goingup
         }
         this.parent.current_floor = this.floor
-        if (HasString(current, "departure")) {
-          s = current.departure + " " + s
+        if (not current_button = null) {
+          if (HasString(current_button, "departure")) {
+            s = current_button.departure + " " + s
+          }
         }
         if (HasString(this, "arrival")) {
           s = s + " " + this.arrival
@@ -73,11 +91,13 @@
         P (Replace (s, "###", "floor " + this.floor))
       }
     ]]></press>
-    <move2 type="script">
+    <move type="script">
+      // Invoke this to have the lift move to this button's destination
+      // without any text appearing
       exit = ObjectListItem (ScopeExitsForRoom (this.parent), 0)
       exit.to = this.to
       this.parent.current_floor = this.floor
-    </move2>
+    </move>
   </type>
 
   <type name="liftentrance">
@@ -109,6 +129,61 @@
 	</function>
 
 
+  <function name="LeavingTheLift">
+	</function>
+
+
+  <function name="LiftRoom" type="object" parameters="button">
+    if (DoesInherit(button, "liftroom")) {
+      return (button)
+    }
+    return (button.parent)
+	</function>
+
+  <function name="LiftExit" type="object" parameters="button">
+    return (ObjectListItem (ScopeExitsForRoom (LiftRoom(button)), 0))
+	</function>
+
+  <function name="LiftCurrentFloor" type="object" parameters="button">
+    exit = LiftExit(button)
+    return (exit.to)
+	</function>
+
+  <function name="LiftCurrentButton" type="object" parameters="button">
+    current = LiftCurrentFloor(button)
+    current_button = null
+    foreach (o, GetDirectChildren(LiftRoom(button))) {
+      if (o.destination = current) current_button = o
+    }
+    return (current_button)
+	</function>
+
+  <function name="LiftAllButtons" type="objectlist" parameters="button">
+    ol = NewObjectList()
+    foreach (o, GetDirectChildren(LiftRoom(button))) {
+      if (DoesInherit(o, "liftbutton")) list add(ol, o)
+    }
+    return (ol)
+	</function>
+
+  <function name="LiftAllEntrances" type="objectlist" parameters="button">
+    ol = NewObjectList()
+    foreach (o, LiftAllButtons(button)) {
+      list add(ol, GetObject(GetExitByLink (o.destination, LiftRoom(button))))
+    }
+    return (ol)
+	</function>
+
+  <function name="LiftCurrentEntrance" type="object" parameters="button">
+    return (GetObject(GetExitByLink (LiftCurrentFloor(button), LiftRoom(button))))
+	</function>
+
+
+  
+  
+  
+  
+  
  <!-- =================================================== -->
   <!-- Tabs -->
 
@@ -147,6 +222,20 @@
 
     <control>
       <controltype>textbox</controltype>
+      <caption>The leaving message</caption>
+      <attribute>leavingmsg</attribute>
+      <mustinherit>liftroom</mustinherit>
+    </control>
+
+    <control>
+      <controltype>checkbox</controltype>
+      <caption>Lock exit after entering lift</caption>
+      <attribute>lockexits</attribute>
+      <mustinherit>liftroom</mustinherit>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
       <caption>Departure message</caption>
       <attribute>departure</attribute>
       <mustinherit>editor_room</mustinherit>
@@ -178,7 +267,7 @@
     <control>
       <controltype>objects</controltype>
       <caption>Destination</caption>
-      <attribute>to</attribute>
+      <attribute>destination</attribute>
       <mustinherit>liftbutton</mustinherit>
     </control>
 
