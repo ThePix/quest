@@ -174,6 +174,7 @@
     } else if(HasString(object, "onafterwear")) {
       P (object.onafterwear)
     }
+    AfterWear
     return(true)
 	]]></function>
 	
@@ -200,7 +201,7 @@
     
     object.display = GetDisplayName(object)
     object.alias = GetDisplayAlias(object) + " (worn)"
-    if (game.feature_limitinventory and HasInt(game.pov, "maxobjects")) {
+    if (HasInt(game.pov, "maxobjects")) {
       game.pov.maxobjects = game.pov.maxobjects + 1
     }
     SetVerbs
@@ -229,8 +230,8 @@
       }
       return (false)
 		}
-    if (game.feature_limitinventory and HasInt(game.pov, "maxobjects")) {
-      if (ListCount(GetDirectChildren(game.pov)) >= game.pov.maxobjects) {
+    if (HasInt(game.pov, "maxobjects")) {
+      if (ListCount(GetAllChildObjects(game.pov)) >= game.pov.maxobjects) {
   			msg (DynamicTemplate("MaxObjectsInInventory", object))
         return (false)
       }
@@ -249,18 +250,8 @@
     } else {
       P (object.removemsg)
     }
-    SetBonuses(object, false)
     
-    object.worn = false
-    object.drop = object.original_drop
-    object.alias = object.original_alias
-    object.original_drop = null
-    object.original_alias = null
-    object.display = null
-    object.parent = game.pov
-    if (game.feature_limitinventory and HasInt(game.pov, "maxobjects")) {
-      game.pov.maxobjects = game.pov.maxobjects - 1
-    }
+    RemoveGarment(object)
     
     //do after
     if (HasScript(object, "onafterremove")) {
@@ -268,12 +259,30 @@
     } else if(HasString(object, "onafterremove")) {
       P(object.onafterremove)
     }
-    SetVerbs
+    AfterRemove
     return(true)
 	]]></function>
 	
   
   
+  <!--
+  Use this to have the player wearing an item at the start of the game.
+  It will ensure it is in the player's inventory.
+  -->
+	<function name="RemoveGarment" parameters="object"><![CDATA[
+    SetBonuses(object, false)
+    object.worn = false
+    object.drop = object.original_drop
+    object.alias = object.original_alias
+    object.original_drop = null
+    object.original_alias = null
+    object.display = null
+    object.parent = game.pov
+    if (HasInt(game.pov, "maxobjects")) {
+      game.pov.maxobjects = game.pov.maxobjects - 1
+    }
+    SetVerbs
+	]]></function>
   
   
   
@@ -347,7 +356,7 @@
   -->
 	<function name="_GetList" parameters="char, slot" type="objectlist"><![CDATA[
     garments = NewObjectList()
-    foreach(o, GetDirectChildren(char)) {
+    foreach(o, GetAllChildObjects(char)) {
       if (HasAttribute(o, "wear_slots") and HasInt(o, "wear_layer") and GetBoolean(o, "worn")) {
         if (ListContains(o.wear_slots, slot) or slot = null) {
           list add(garments, o)
@@ -389,7 +398,7 @@
   
   
   <!--
-  Returns the given object list as a string in the form a one, a two and a three.
+  Returns a string list of every unique slot used in the game.
   -->
   <function name="_Slots" type="stringlist"><![CDATA[
     sl = NewStringList()
@@ -464,7 +473,7 @@
 
   
 	<function name="SetVerbs"><![CDATA[
-    foreach(o, GetDirectChildren(game.pov)) {
+    foreach(o, GetAllChildObjects(game.pov)) {
       if (HasAttribute(o, "wear_slots") and HasInt(o, "wear_layer")) {
         SetVerbsForGarment(o)
       }
@@ -475,7 +484,7 @@
 
 	<function name="WornCount" type="int"><![CDATA[
     count = 0
-    foreach(o, GetDirectChildren(game.pov)) {
+    foreach(o, GetAllChildObjects(game.pov)) {
       if (GetBoolean(o, "worn")) {
         count = count + 1
       }
@@ -579,6 +588,13 @@
 	<function name="ClothingBonusMultiplier" type="int"><![CDATA[
     return (1)
 	]]></function>
+
+  
+	<function name="AfterRemove">
+	</function>
+
+	<function name="AfterWear">
+	</function>
 
   
   
