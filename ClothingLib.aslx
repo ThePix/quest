@@ -188,12 +188,7 @@
   It will ensure it is in the player's inventory.
   -->
 	<function name="WearGarment" parameters="object"><![CDATA[
-    if (HasAttribute(game, "wornclothinglocation")) {
-      object.parent = game.wornclothinglocation
-    }
-    else {
-      object.parent = game.pov
-    }
+    object.parent = _GetWornClothingLocation()
     object.worn = True
     object.original_drop = object.drop
     object.original_alias = object.alias
@@ -291,6 +286,19 @@
   <!--   UTILITY FUNCTIONS   -->
   
   
+  <!--
+  Returns the place to put worn clothing
+  -->
+	<function name="_GetWornClothingLocation" type="object"><![CDATA[
+    foreach (o, GetDirectChildren(game.pov)) {
+      if (GetBoolean(o, "wornclothinglocation")) {
+        return (o)
+      }
+    }
+	  return (game.pov)
+	]]></function>
+	
+
   <!--
   Returns the outermost garment in one of the slots of the given garment (not necessarily the same
   as the outermost garment)
