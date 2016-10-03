@@ -661,6 +661,12 @@
 		<wear_layer type="int">2</wear_layer>
 		<inventoryverbs type="listextend">[Wear];[Remove]</inventoryverbs>
     <wear_slots type="stringlist" />
+    <colourmyalt type="script"><![CDATA[
+      s = this.name
+      if (HasString(this, "alias")) s = this.alias
+      if (HasString(this, "listalias")) s = this.listalias
+      this.listalias = "<span style=\"color:blue\">" + s + "</span>"
+    ]]></colourmyalt>
 	</type>
   
   
@@ -800,5 +806,11 @@
 			<expand/>
 		</control>
 		
+    <control>
+      <controltype>label</controltype>
+      <caption>Instructions for use</caption>
+      <href>https://github.com/ThePix/quest/wiki/Clothing-Library</href>
+    </control>
+
 	</tab>
 </library>
