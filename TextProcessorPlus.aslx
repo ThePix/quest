@@ -249,6 +249,7 @@
     text = Mid(command, colon + 1)
     if (iseither) {
       text2 = Mid(command, colon2 + 1)
+      text = Replace(text, ":" + text2, "")
     }
     else {
       text2 = ""
