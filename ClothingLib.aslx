@@ -502,14 +502,27 @@
 
   
   
+	<function name="_SetVerbList" parameters="garment, list, s">
+   garment.inventoryverbs = list
+   if (not s = null) {
+     if (not s = "") {
+       foreach (s2, Split(s, ";")) {
+         list add (garment.inventoryverbs, s2)
+       }
+     }
+   }
+	</function>
+
+  
+  
 	<function name="SetVerbsForGarment" parameters="garment"><![CDATA[
     outer = _GetOuterForGarment(game.pov, garment)
     if (garment.worn) {
       if (outer = null) {
-        garment.inventoryverbs = lists.remove
+        _SetVerbList (garment, lists.remove, garment.wornverbs)
       }
       else if (outer.wear_layer < garment.wear_layer) {
-        garment.inventoryverbs = lists.remove
+        _SetVerbList (garment, lists.remove, garment.wornverbs)
       }
       else {
         garment.inventoryverbs = lists.lookat
@@ -517,13 +530,13 @@
     }
     else {
       if (outer = null) {
-        garment.inventoryverbs = lists.wear
+        _SetVerbList (garment, lists.wear, garment.invverbs)
       }
       else if (outer.wear_layer < garment.wear_layer) {
-        garment.inventoryverbs = lists.wear
+        _SetVerbList (garment, lists.wear, garment.invverbs)
       }
       else {
-        garment.inventoryverbs = lists.drop
+        _SetVerbList (garment, lists.drop, garment.invverbs)
       }
     }
 	]]></function>
@@ -652,6 +665,8 @@
 	<type name="wearable">
 		<worn type="boolean">false</worn>
 		<armour type="int">0</armour>
+		<invverbs type="string"></invverbs>
+		<wornverbs type="string"></wornverbs>
     <take type="script">
       msg("You pick up the " + LCase(GetDisplayAlias(this)) + ".")
       this.inventoryverbs = if(game.pov.headwearslot = null, lists.wear, lists.drop)
@@ -661,12 +676,16 @@
 		<wear_layer type="int">2</wear_layer>
 		<inventoryverbs type="listextend">[Wear];[Remove]</inventoryverbs>
     <wear_slots type="stringlist" />
-    <colourmyalt type="script"><![CDATA[
-      s = this.name
-      if (HasString(this, "alias")) s = this.alias
+    <colourmylistalias type="script"><![CDATA[
+      if (HasString(this, "alias")) {
+        s = CapFirst(this.alias)
+      }
+      else {
+        s = CapFirst(this.name)
+      }
       if (HasString(this, "listalias")) s = this.listalias
       this.listalias = "<span style=\"color:blue\">" + s + "</span>"
-    ]]></colourmyalt>
+    ]]></colourmylistalias>
 	</type>
   
   
@@ -766,6 +785,27 @@
 			<controltype>textbox</controltype>
 			<attribute>bonusatts</attribute>
 			<caption>Wearing gives a bonus to these attributes</caption>
+			<nullable/>
+		</control>
+
+		<control>
+			<controltype>label</controltype>
+			<caption>Additional display verbs:</caption>
+		</control>
+
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<controltype>textbox</controltype>
+			<attribute>invverbs</attribute>
+			<caption>Inventory</caption>
+			<nullable/>
+		</control>
+
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<controltype>textbox</controltype>
+			<attribute>wornverbs</attribute>
+			<caption>Worn</caption>
 			<nullable/>
 		</control>
 
