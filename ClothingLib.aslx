@@ -1,37 +1,22 @@
+<?xml version="1.0"?>
 <library>
   <!--
-  If you are viewing thios on GitHub and want to download it, right click on the RAW button
+  If you are viewing this on GitHub and want to download it, right click on the RAW button
   just above, and select "Save link as..."
   -->
 
-    <!--
-    Pixie's clothing Library v3.0
-    
-    Tutorial here:
-    http://pixie-if.blogspot.co.uk/p/clothing.html
- 
-		Based on: Chase's Wearables Library v2.1,
-		Based on: Pixie's Clothing Library
-		
-		You may edit this library however you please.
-		
-    I have changed the internal code a fair bit, but you should be able to swap this into any existing game with no problem,
-    the wearables type is almost the same, the difference being that layer zero is special. If none of your garments are assigned
-    to layer zero and you do not use the incl;uded functions in your own code, you are good to go.
-    
-    Changes:
-    
-    The library uses game.pov rather than player, in line with other libraries, to support the POV functionality
-    
-    The verbs for each garment are changed depending on the game state. You only see "Wear" for an item
-    that can be worn right now.
-    
-    Supports inventory limits; items that are worn do not count towards the number of objects held
-    (but the so-called volume limit, which is really a weight limit, will include worn items).
-    
-    Also offers some support for armour, bonus-giving garments, NPC clothing.                   
-                          
-    -->
+  
+  <!--
+  ClothingLib v3.0
+  Quest version: 5.6
+  Written by: The Pixie, 2015-2016
+		Based on: Chase's Wearables Library v2.1, 2012
+		Based on: Pixie's Clothing Library, 2011
+  
+  Tutorial and notes here:
+  https://github.com/ThePix/quest/wiki/Clothing-Library
+  -->
+
 	
 	<dynamictemplate name="WearSuccessful">"You put " + object.article + " on."</dynamictemplate>
 	<dynamictemplate name="WearUnsuccessful">"You can't wear " + object.article + "."</dynamictemplate>
@@ -790,7 +775,7 @@
 
 		<control>
 			<controltype>label</controltype>
-			<caption>Additional display verbs:</caption>
+			<caption>Additional display verbs (separate with semi-colons):</caption>
 		</control>
 
 		<control>

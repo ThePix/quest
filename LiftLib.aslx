@@ -1,20 +1,19 @@
 <?xml version="1.0"?>
 <library>
   <!--
-  If you are viewing thios on GitHub and want to download it, right click on the RAW button
+  If you are viewing this on GitHub and want to download it, right click on the RAW button
   just above, and select "Save link as..."
   -->
-  
-  <!--
-  Using this library you can easily implement one or more lifts in your game. Each lift can stop at any number
-  of floors.
-  Of course, you could apply this to any transport system that involves pressing a button to get to a destination.
-  
-  Documentation is here:
-  https://github.com/ThePix/quest/wiki/Lift-Library
-  
-  Version 2
 
+
+  <!--
+  LiftLib v2.0
+  
+  Quest version: 5.6
+  Written by: The Pixie, 2011-2016
+
+  Tutorial and notes here:
+  https://github.com/ThePix/quest/wiki/Lift-Library
   -->
 
 
