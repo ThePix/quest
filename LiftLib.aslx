@@ -49,53 +49,13 @@
     <displayverbs type="simplestringlist">Press</displayverbs>
     <floor type="int">1</floor>
     <pressmsg>You press the button.</pressmsg>
-    <press type="script"><![CDATA[
-      exit = ObjectListItem (ScopeExitsForRoom (this.parent), 0)
-      current = exit.to
-      current_button = null
-      foreach (o, GetDirectChildren(this.parent)) {
-        if (o.destination = current) current_button = o
-      }
-      if (exit.to = this.destination) {
-        s = this.parent.samefloor
-      }
-      else {
-        exit.to = this.destination
-        if (this.parent.current_floor > this.floor) {
-          s = this.parent.goingdown
-        }
-        else {
-          s = this.parent.goingup
-        }
-        this.parent.current_floor = this.floor
-        if (not current_button = null) {
-          if (HasString(current_button, "departure")) {
-            s = current_button.departure + " " + s
-          }
-        }
-        if (HasString(this, "arrival")) {
-          s = s + " " + this.arrival
-        }
-        this.parent.usage_count = this.parent.usage_count + 1
-      }
-
-      // prepend the button pressing message
-      s = this.pressmsg + " " + s
-
-      // Swap ### for the floor name
-      if (HasString(this, "floorname")) {
-        P (Replace (s, "###", ToString (this.floorname)))
-      }
-      else {
-        P (Replace (s, "###", "floor " + this.floor))
-      }
-    ]]></press>
+    <press type="script">
+      _PressButton(this, false)
+    </press>
     <move type="script">
       // Invoke this to have the lift move to this button's destination
       // without any text appearing
-      exit = ObjectListItem (ScopeExitsForRoom (this.parent), 0)
-      exit.to = this.to
-      this.parent.current_floor = this.floor
+      _PressButton(this, true)
     </move>
   </type>
 
@@ -118,6 +78,51 @@
   </type>
 
   
+  <function name="_PressButton" parameters="button, silently">
+      exit = ObjectListItem (ScopeExitsForRoom (button.parent), 0)
+      current = exit.to
+      current_button = null
+      foreach (o, GetDirectChildren(button.parent)) {
+        if (o.destination = current) current_button = o
+      }
+      if (exit.to = button.destination) {
+        s = button.parent.samefloor
+      }
+      else {
+        exit.to = button.destination
+        if (button.parent.current_floor > button.floor) {
+          s = button.parent.goingdown
+        }
+        else {
+          s = button.parent.goingup
+        }
+        button.parent.current_floor = button.floor
+        if (not current_button = null) {
+          if (HasString(current_button, "departure")) {
+            s = current_button.departure + " " + s
+          }
+        }
+        if (HasString(button, "arrival")) {
+          s = s + " " + button.arrival
+        }
+        button.parent.usage_count = button.parent.usage_count + 1
+      }
+      if (not silently) {
+        // prepend the button pressing message
+        s = button.pressmsg + " " + s
+
+        // Swap ### for the floor name
+        if (HasString(button, "floorname")) {
+          P (Replace (s, "###", ToString (button.floorname)))
+        }
+        else {
+          P (Replace (s, "###", "floor " + button.floor))
+        }
+      }
+	</function>
+
+
+
   <!--
   This gets called only when the action is successful; for text that is part of
   the narrative. You can override this in your own code to flag that a command was successful

@@ -21,7 +21,10 @@
 	<dynamictemplate name="WearSuccessful">"You put " + object.article + " on."</dynamictemplate>
 	<dynamictemplate name="WearUnsuccessful">"You can't wear " + object.article + "."</dynamictemplate>
 	<dynamictemplate name="CannotWearIfNotHeld">"You would need to get it before you can put it on."</dynamictemplate>
+	<dynamictemplate name="CannotRemoveIfNotHeld">"You would need to get it before you can take it off."</dynamictemplate>
 	<dynamictemplate name="AlreadyWearing">"You are already wearing " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="CannotRemoveIfNotWearing">"You are not wearing " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="NotRemovable">"You cannot remove " + object.article + "!"</dynamictemplate>
 	<dynamictemplate name="CannotWearOver">"You cannot wear that over " + object.display + "."</dynamictemplate>
 	<dynamictemplate name="CannotWearWith">"You cannot wear that while wearing " + object.display + "."</dynamictemplate>
 	
@@ -194,11 +197,11 @@
   
 	<function name="_DoRemove" parameters="object" type="boolean"><![CDATA[
 		if (not ListContains(GetAllChildObjects(player), object)) {
-			msg ("You cannot; you do not have " + object.article + ".")
+			msg (DynamicTemplate("CannotRemoveIfNotHeld", object))
       return (false)
 		}
 		if (not GetBoolean(object, "worn")) {
-			msg ("You are not wearing " + object.article + ".")
+			msg (DynamicTemplate("CannotRemoveIfNotWearing", object))
       return (false)
 		}
 		if (not GetBoolean(object, "removeable")) {
@@ -206,7 +209,7 @@
   			msg (object.notremoveablemessage)
       }
       else {
-  			msg ("You can't remove " + object.article + "!")
+  			msg (DynamicTemplate("NotRemovable", object))
       }
       return (false)
 		}
@@ -576,9 +579,6 @@
         }
         bonus = ClothingBonusMultiplier() * bonus
         n = GetInt(player, att) + bonus
-        if (player.speciality="fashionable") {
-          n = n + bonus
-        }
         set (player, att, n)
       }
     }
@@ -653,7 +653,7 @@
 		<invverbs type="string"></invverbs>
 		<wornverbs type="string"></wornverbs>
     <take type="script">
-      msg("You pick up the " + LCase(GetDisplayAlias(this)) + ".")
+      msg(DynamicTemplate("TakeSuccessful", this))
       this.inventoryverbs = if(game.pov.headwearslot = null, lists.wear, lists.drop)
       this.parent = game.pov
     </take>
