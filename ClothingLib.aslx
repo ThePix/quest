@@ -176,23 +176,105 @@
   It will ensure it is in the player's inventory.
   -->
 	<function name="WearGarment" parameters="object"><![CDATA[
+    if (GetBoolean(object, "multistate")) {
+      object.multistate_status = 1
+    }
+    else {
+      object.multistate_status = 0
+    }
+    
+    if (object.original_alias = null) {
+      object.original_drop = object.drop
+      object.original_alias = object.alias
+      object.original_listalias = object.listalias
+      object.display = GetDisplayName(object)
+    }
+
     object.parent = _GetWornClothingLocation()
     object.worn = True
-    object.original_drop = object.drop
-    object.original_alias = object.alias
     object.drop = false
     
-    object.display = GetDisplayName(object)
-    object.alias = GetDisplayAlias(object) + " (worn)"
+    SetGarmentAlias(object)
+    _SetMultistate(object)
+    SetVerbs
+    SetBonuses(object, true)
+
     if (HasInt(game.pov, "maxobjects")) {
       game.pov.maxobjects = game.pov.maxobjects + 1
     }
-    SetVerbs
-    SetBonuses(object, true)
+    
+    // Do error checking now so item can be put on even if multistate is going to fail
+    if (GetBoolean(object, "multistate")) {
+      if (not HasAttribute(object, "multistate_descriptors")) error ("No descriptors for multistate clothing: " + object.name)
+      if (not HasAttribute(object, "multistate_verbs")) error ("No verbs for multistate clothing: " + object.name)
+      if (not HasAttribute(object, "multistate_wearslots")) error ("No wearslots for multistate clothing: " + object.name)
+      statecount = ListCount(object.multistate_descriptors)
+      if (not statecount = ListCount(object.multistate_verbs)) error ("Mismatch in lists for multistate clothing: " + object.name)
+      if (not statecount = ListCount(object.multistate_wearslots)) error ("Mismatch in lists for multistate clothing: " + object.name)
+      object.original_wearslots = object.wear_slots
+    }
 	]]></function>
   
   
   
+	<function name="SetGarmentAlias" parameters="object"><![CDATA[
+    ext = GetDescriptor(object)
+    object.alias = object.display + ext
+    if (HasString(object, "listalias")) {
+      if (StartsWith(object.listalias, "<span style=\"color:blue\">")) {
+        object.listalias = null
+        do(object, "colourmylistalias")
+      }
+      else {
+        object.listalias = object.original_listalias + ext
+      }
+    }
+	]]></function>
+  
+  
+  
+	<function name="GetDescriptor" parameters="object" type="string"><![CDATA[
+    if (object.multistate_status = 0) return (" (worn)")
+    s = StringListItem(object.multistate_descriptors, object.multistate_status - 1)
+    if (s = "*")  return (" (worn)")
+    if (IsRegexMatch ("^\\w", s, "clothinglibmatch")) {
+      return (" (worn " + s + ")")
+    }
+    else {
+      return (" (worn " + s + ")")
+    }
+	]]></function>
+
+
+
+	<function name="SetMultistate" parameters="object, state"><![CDATA[
+    if (not object.multistate_status = state) {
+      object.multistate_status = state
+      SetGarmentAlias(object)
+      _SetMultistate(object)
+      SetVerbs
+    }
+	]]></function>
+
+  
+  
+	<function name="_SetMultistate" parameters="object"><![CDATA[
+    ws = StringListItem(object.multistate_wearslots, object.multistate_status - 1)
+    if (ws = "*") {
+      object.wear_slots = object.original_wearslots
+    }
+    else {
+      object.wear_slots = Split(ws, ";")
+    }
+    wv = StringListItem(object.multistate_verbs, object.multistate_status - 1)
+    if (wv = "*") {
+      object.wornverbs = null
+    }
+    else {
+      object.wornverbs = wv
+    }
+	]]></function>
+
   
   
 	<function name="_DoRemove" parameters="object" type="boolean"><![CDATA[
@@ -249,7 +331,7 @@
   
   
   <!--
-  Use this to have the player wearing an item at the start of the game.
+  Use this to have the player stop wearing an item.
   It will ensure it is in the player's inventory.
   -->
 	<function name="RemoveGarment" parameters="object"><![CDATA[
@@ -257,9 +339,15 @@
     object.worn = false
     object.drop = object.original_drop
     object.alias = object.original_alias
-    object.original_drop = null
-    object.original_alias = null
-    object.display = null
+    if (HasString(object, "listalias")) {
+      if (StartsWith(object.listalias, "<span style=\"color:blue\">")) {
+        object.listalias = null
+        do(object, "colourmylistalias")
+      }
+      else {
+        object.listalias = object.original_listalias
+      }
+    }
     object.parent = game.pov
     if (HasInt(game.pov, "maxobjects")) {
       game.pov.maxobjects = game.pov.maxobjects - 1
@@ -505,18 +593,7 @@
   
 	<function name="SetVerbsForGarment" parameters="garment"><![CDATA[
     outer = _GetOuterForGarment(game.pov, garment)
-    if (garment.worn) {
-      if (outer = null) {
-        _SetVerbList (garment, lists.remove, garment.wornverbs)
-      }
-      else if (outer.wear_layer < garment.wear_layer) {
-        _SetVerbList (garment, lists.remove, garment.wornverbs)
-      }
-      else {
-        garment.inventoryverbs = lists.lookat
-      }
-    }
-    else {
+    if (not garment.worn) {
       if (outer = null) {
         _SetVerbList (garment, lists.wear, garment.invverbs)
       }
@@ -525,6 +602,27 @@
       }
       else {
         _SetVerbList (garment, lists.drop, garment.invverbs)
+      }
+    }
+    else {
+      if (outer = null) {
+        if (garment.removeable) {
+          _SetVerbList (garment, lists.remove, garment.wornverbs)
+        }
+        else {
+          _SetVerbList (garment, lists.lookat, garment.wornverbs)
+        }
+      }
+      else if (outer.wear_layer < garment.wear_layer) {
+        if (garment.removeable) {
+          _SetVerbList (garment, lists.remove, garment.wornverbs)
+        }
+        else {
+          _SetVerbList (garment, lists.lookat, garment.wornverbs)
+        }
+      }
+      else {
+        garment.inventoryverbs = lists.lookat
       }
     }
 	]]></function>
@@ -648,6 +746,7 @@
   
   
 	<type name="wearable">
+		<usestandardverblist type="boolean">true</usestandardverblist>
 		<worn type="boolean">false</worn>
 		<armour type="int">0</armour>
 		<invverbs type="string"></invverbs>
@@ -723,7 +822,6 @@
 			<advanced/>
 		</control>
 		
-		<!-- snip -->
 		
 		<control>
 			<mustinherit>wearable</mustinherit>
@@ -741,11 +839,26 @@
 			<nullable/>
 		</control>
 		
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<controltype>checkbox</controltype>
+			<attribute>advanced</attribute>
+			<caption>Advanced features?</caption>
+		</control>
+
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<controltype>checkbox</controltype>
+			<attribute>multistate</attribute>
+			<caption>Multistate?</caption>
+		</control>
 
 
 		<control>
+			<mustinherit>wearable</mustinherit>
 			<controltype>title</controltype>
 			<caption>Advanced features</caption>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 		
 
@@ -756,6 +869,7 @@
 			<controltype>checkbox</controltype>
 			<attribute>removeable</attribute>
 			<caption>Removeable?</caption>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 		
 		<control>
@@ -763,6 +877,7 @@
 			<controltype>number</controltype>
 			<caption>Protection (if implemented!)</caption>
 			<attribute>armour</attribute>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 		
 		<control>
@@ -771,11 +886,14 @@
 			<attribute>bonusatts</attribute>
 			<caption>Wearing gives a bonus to these attributes</caption>
 			<nullable/>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 
 		<control>
+			<mustinherit>wearable</mustinherit>
 			<controltype>label</controltype>
 			<caption>Additional display verbs (separate with semi-colons):</caption>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 
 		<control>
@@ -784,6 +902,7 @@
 			<attribute>invverbs</attribute>
 			<caption>Inventory</caption>
 			<nullable/>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 
 		<control>
@@ -792,6 +911,7 @@
 			<attribute>wornverbs</attribute>
 			<caption>Worn</caption>
 			<nullable/>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 
 
@@ -803,6 +923,7 @@
 			<mustinherit>wearable</mustinherit>
 			<controltype>title</controltype>
 			<caption>After Wearing</caption>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 		
 		<control>
@@ -813,12 +934,14 @@
 			<types>null=None; string=Text; script=Run script</types>
 			<editors>string=textbox</editors>
 			<expand/>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 		
 		<control>
 			<mustinherit>wearable</mustinherit>
 			<controltype>title</controltype>
 			<caption>After Removing</caption>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
 		
 		<control>
@@ -829,7 +952,48 @@
 			<types>null=None; string=Text; script=Run script</types>
 			<editors>string=textbox</editors>
 			<expand/>
+      <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
+
+
+
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<controltype>title</controltype>
+			<caption>Multi-state</caption>
+      <onlydisplayif>this.multistate</onlydisplayif>
+		</control>
+
+
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<caption>Descriptor for each state (or * for none)</caption>
+			<controltype>list</controltype>
+			<attribute>multistate_descriptors</attribute>
+			<editprompt>Please enter the descriptor to use in the item name for this state</editprompt>
+      <onlydisplayif>this.multistate</onlydisplayif>
+		</control>
+		
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<caption>Wear slots for each state (or * for none)</caption>
+			<controltype>list</controltype>
+			<attribute>multistate_wearslots</attribute>
+			<editprompt>Please enter all the wear locations for this state, separated by semi-colons</editprompt>
+      <onlydisplayif>this.multistate</onlydisplayif>
+		</control>
+		
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<caption>Additional verbs for each state (or * for none)</caption>
+			<controltype>list</controltype>
+			<attribute>multistate_verbs</attribute>
+			<editprompt>Please enter all the additional verbs for this state, separated by semi-colons</editprompt>
+      <onlydisplayif>this.multistate</onlydisplayif>
+		</control>
+		
+
+
 		
     <control>
       <controltype>label</controltype>
