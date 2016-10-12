@@ -187,6 +187,8 @@
       object.original_drop = object.drop
       object.original_alias = object.alias
       object.original_listalias = object.listalias
+      object.original_bonusatts = object.bonusatts
+      object.original_wearslots = object.wear_slots
       object.display = GetDisplayName(object)
     }
 
@@ -248,10 +250,14 @@
 
 
 	<function name="SetMultistate" parameters="object, state"><![CDATA[
+    if (state < 1) error ("Attempt to set state to " + state + " for " + object.name)
+    if (state > ListCount(object.multistate_descriptors)) error ("Attempt to set state to " + state + " for " + object.name + " (max " + ListCount(object.multistate_descriptors) + ")")
     if (not object.multistate_status = state) {
+      SetBonuses(object, false)
       object.multistate_status = state
       SetGarmentAlias(object)
       _SetMultistate(object)
+      SetBonuses(object, true)
       SetVerbs
     }
 	]]></function>
@@ -259,19 +265,28 @@
   
   
 	<function name="_SetMultistate" parameters="object"><![CDATA[
-    ws = StringListItem(object.multistate_wearslots, object.multistate_status - 1)
-    if (ws = "*") {
-      object.wear_slots = object.original_wearslots
-    }
-    else {
-      object.wear_slots = Split(ws, ";")
-    }
-    wv = StringListItem(object.multistate_verbs, object.multistate_status - 1)
-    if (wv = "*") {
-      object.wornverbs = null
-    }
-    else {
-      object.wornverbs = wv
+    if (GetBoolean(object, "multistate")) {
+      ws = StringListItem(object.multistate_wearslots, object.multistate_status - 1)
+      if (ws = "*") {
+        object.wear_slots = object.original_wearslots
+      }
+      else {
+        object.wear_slots = Split(ws, ";")
+      }
+      wv = StringListItem(object.multistate_verbs, object.multistate_status - 1)
+      if (wv = "*") {
+        object.wornverbs = null
+      }
+      else {
+        object.wornverbs = wv
+      }
+      ba = StringListItem(object.multistate_bonusatts, object.multistate_status - 1)
+      if (ba = "*") {
+        object.bonusatts = object.original_bonusatts
+      }
+      else {
+        object.bonusatts = ba
+      }
     }
 	]]></function>
 
@@ -660,7 +675,7 @@
   -->
 	<function name="SetBonuses" parameters="garment, wearflag"><![CDATA[
     if (HasString(garment, "bonusatts")) {
-      foreach (att, Split(garment.bonusatts, ",")) {
+      foreach (att, Split(garment.bonusatts, ";")) {
         bonus = 1
         plusarray = Split(att, "+")
         minusarray = Split(att, "-")
@@ -786,7 +801,7 @@
 	<tab>
 		<parent>_ObjectEditor</parent>
 		<caption>Wearable</caption>
-		<mustnotinherit>editor_room; defaultplayer</mustnotinherit>
+		<mustnotinherit>editor_room; editor_player</mustnotinherit>
 		
 		<control>
 			<controltype>title</controltype>
@@ -884,7 +899,7 @@
 			<mustinherit>wearable</mustinherit>
 			<controltype>textbox</controltype>
 			<attribute>bonusatts</attribute>
-			<caption>Wearing gives a bonus to these attributes</caption>
+			<caption>Wearing gives a bonus to these attributes (separate with semi-colons)</caption>
 			<nullable/>
       <onlydisplayif>this.advanced</onlydisplayif>
 		</control>
@@ -988,6 +1003,15 @@
 			<caption>Additional verbs for each state (or * for none)</caption>
 			<controltype>list</controltype>
 			<attribute>multistate_verbs</attribute>
+			<editprompt>Please enter all the additional verbs for this state, separated by semi-colons</editprompt>
+      <onlydisplayif>this.multistate</onlydisplayif>
+		</control>
+		
+		<control>
+			<mustinherit>wearable</mustinherit>
+			<caption>Bonus to attributes (or * for default)</caption>
+			<controltype>list</controltype>
+			<attribute>multistate_bonusatts</attribute>
 			<editprompt>Please enter all the additional verbs for this state, separated by semi-colons</editprompt>
       <onlydisplayif>this.multistate</onlydisplayif>
 		</control>
