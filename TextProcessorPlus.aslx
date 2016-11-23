@@ -7,7 +7,10 @@
 
 
   <!--
-  Text Processor Plus v1.0
+  Text Processor Plus v1.1
+  
+  Version 1.1 modifies how null (or no attribute) is handled for if/either.
+  If gets converted to a string, "null", rather than throwing an error.
   
   Quest version: 5.6
   Written by: The Pixie, 2016
@@ -289,11 +292,14 @@
       return (ConditionalProcess (result = checkfor, text, text2, data))
     }
     else {
+      // split the string into three parts; lhs, op, rhs
       lhs = Left(condition, operator - 1)
       rhs = Mid(condition, operator + operatorlength)
       op = Mid(condition, operator, operatorlength)
       dot = Instr(lhs, ".")
       if (dot = 0) {
+        // if there is no dot, either this is an attribute of the game object
+        // (i.e., game is implicit) or not a text processor at all
         objectname = ""
         attributename = ""
         if (HasInt(game, lhs)) {
@@ -313,9 +319,14 @@
         return ("{if " + command + "}")
       }
       else {
+        // so for the left side, we have object (now known to be an object)
+        // and attribute, a string, that may not exist
         value = GetAttribute(object, attributename)
-        if (TypeOf(value) = "null") error ("Text Processor Error: No attribute found called " + attributename + " for " + object.name + ". Section is: " + section)
-        if (TypeOf(value) = "object") {
+        if (TypeOf(value) = "null") {
+          //error ("Text Processor Error: No attribute found called " + attributename + " for " + object.name + ". Section is: " + section)
+          value = "null"
+        }
+        else if (TypeOf(value) = "object") {
           value = value.name
         }
         if (op = "=") {
