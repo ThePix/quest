@@ -1,0 +1,709 @@
+﻿<library>
+
+  <tab>
+    <parent>_ObjectEditor</parent>
+	<caption>Stackable</caption>
+	<mustnotinherit>editor_room; editor_player</mustnotinherit>
+	
+	<control>
+	  <controltype>dropdowntypes</controltype>
+	  <types>*=Not stackable; mainstack_object=Main object of a stack; childstack_object=Member of a stack</types>
+	  <caption>Stack</caption>
+	</control>
+	
+	<control>
+	  <controltype>textbox</controltype>
+	  <attribute>stackname</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+	  <caption>Name of stack (What shows in the inventory as 'name': 'number')</caption>
+	</control>
+	
+	<control>
+	  <controltype>objects</controltype>
+	  <attribute>stackparent</attribute>
+	  <onlydisplayif>this.isstackable and this.childstack</onlydisplayif>
+	  <caption>Main stack object</caption>
+	</control>
+	
+	<control>
+	  <controltype>multi</controltype>
+	  <attribute>useinstack</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+	  <types>null=Default behavior; script=Run script</types>
+	  <caption>On stack use</caption>
+	</control>
+	
+	<control>
+	  <controltype>multi</controltype>
+	  <attribute>useinstack</attribute>
+	  <onlydisplayif>this.isstackable and this.childstack and this.stackparent.childinheritscript = false</onlydisplayif>
+	  <types>null=Default behavior; script=Run script</types>
+	  <caption>On stack use</caption>
+	</control>
+	
+	<control>
+	  <controltype>checkbox</controltype>
+	  <attribute>childinheritscript</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+	  <caption>Members of this stack all inherit this script</caption>
+	</control>
+	
+	<control>
+	  <controltype>textbox</controltype>
+	  <attribute>usequestion</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack and not this.childinheritscript</onlydisplayif>
+	  <caption>Question asked on use (For example: Use which 'object'?)</caption>
+	</control>
+	
+	<control>
+	  <controltype>textbox</controltype>
+	  <attribute>dropquestion</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+	  <caption>Question asked on drop (For example: Drop which 'object'?)</caption>
+	</control>
+	
+	<control>
+	  <controltype>number</controltype>
+	  <attribute>stacklimit</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+	  <caption>Limit stack objects (Leave at 0 for unlimited)</caption>
+	  <minimum>0</minimum>
+	</control>
+	
+	<control>
+	  <controltype>textbox</controltype>
+	  <attribute>stacklimitreached</attribute>
+	  <onlydisplayif>this.isstackable and this.mainstack and this.stacklimit > 0</onlydisplayif>
+	  <caption>Message to display when taking object after limit is reached</caption>
+	</control>
+	
+	<control>
+	  <label>Verbs for the stack</label>
+	  <controltype>list</controltype>
+	  <attribute>stackverbs</attribute>
+	  <editprompt>Please enter a verb</editprompt>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+	</control>
+
+    <control>
+      <selfcaption>"Look at" stack description</selfcaption>
+      <controltype>multi</controltype>
+      <attribute>stacklook</attribute>
+      <types>
+        null=List everything inside; string=Text; script=Run script
+      </types>
+      <editors>
+        string=richtext
+      </editors>
+      <expand/>
+	  <onlydisplayif>this.isstackable and this.mainstack</onlydisplayif>
+    </control>
+	
+  </tab>
+
+  <function name="stack" parameters="object"><![CDATA[
+	if (object.isstackable) {
+	  if (object.mainstack) {
+	    if (GetObject(object.stackname + "_container") = null) {
+	      create (object.stackname + "_container", "stack_container")
+		  container = GetObject(object.stackname + "_container")
+		  container.stacked = NewObjectDictionary()
+		  container.stacked_count = 0
+		  container.stackedalias = NewStringDictionary()
+		  container.stackedalias_count = 0
+		  MoveObject (container, game.pov)
+		  container.use => { use_container (this.originalalias) }
+		  container.mainstack = object
+		  container.inventoryverbs = object.stackverbs
+		  if (object.stacklook = null) {
+		    object.stacklook => {
+              d = NewStringDictionary()
+              dcount = 0
+			  alias = this.stackedalias
+			  count = this.stackedalias_count
+              OutputTextNoBr ("It's a stack of " + this.mainstack.stackname + ", containing ")
+              if (count = 0) {
+                msg ("nothing.")
+              }
+			  else {
+                foreach (obj, alias) {
+                  dcount = dcount + 1
+                  dictionary add (d, obj, ToString(dcount))
+                  if (ToInt(StringDictionaryItem(alias, obj)) = 1) {
+                    amount = "a"
+                  }
+                  else {
+                    amount = StringDictionaryItem(alias, obj)
+                  }
+                  if (count > 1) {
+                    if (not StringDictionaryItem(d, obj) = ToString(count)) {
+                      OutputTextNoBr (amount + " " + obj)
+                      if (amount = "a") {
+                        OutputTextNoBr (", ")
+                      }
+                      else {
+                        OutputTextNoBr ("s, ")
+                      }
+                    }
+                    else {
+                      OutputTextNoBr ("and " + amount + " " + obj)
+                      if (amount = "a") {
+                        msg (".")
+                      }
+                      else {
+                        msg ("s.")
+                      }
+					}
+                  }
+				  else {
+				    OutputTextNoBr (amount + " " + obj)
+					if (amount = "a") {
+					  msg (".")
+					}
+					else {
+					  msg ("s.")
+					}
+				  }
+                }
+              }
+            }
+		  }
+		  container.look = object.stacklook
+		}
+		else {
+		  container = GetObject(object.stackname + "_container")
+		  container.gender = "they"
+		  container.article = "them"
+		}
+	    if (object.stacklimit = 0 or container.stacked_count < object.stacklimit) {
+	      if (object.alias = null) {
+		    object.alias = object.name
+		  }
+		  container.alias = object.stackname
+		  container.originalalias = object.stackname
+		  container.stacked_count = container.stacked_count + 1
+		  dictionary add (container.stacked, ToString(container.stacked_count), object)
+	      container.originalalias = container.alias
+	      container.alias = container.originalalias + ": " + ToString(container.stacked_count)
+	      if (DictionaryContains(container.stackedalias, object.alias)) {
+	        containsalias = true
+	      }
+	      else {
+	        containsalias = false
+	      }
+	      if (containsalias = false) {
+		    container.stackedalias_count = container.stackedalias_count + 1
+		    dictionary add (container.stackedalias, object.alias, ToString(1))
+	      }
+	      else {
+	        aliascount = ToInt(StringDictionaryItem(container.stackedalias, object.alias))
+	        dictionary remove (container.stackedalias, object.alias)
+		    dictionary add (container.stackedalias, object.alias, ToString(aliascount + 1))
+	      }
+		}
+	  }
+	  else if (object.childstack) {
+	    if (object.alias = null) {
+		  object.alias = object.name
+		}
+	    if (GetObject(object.stackparent.stackname + "_container") = null) {
+		  create (object.stackparent.stackname + "_container", "stack_container")
+		  container = GetObject(object.stackparent.stackname + "_container")
+		  container.stacked = NewObjectDictionary()
+		  container.stacked_count = 0
+		  container.stackedalias = NewStringDictionary()
+		  container.stackedalias_count = 0
+		  MoveObject (container, game.pov)
+		  container.use => { use_container (this.originalalias) }
+		  container.mainstack = object.stackparent
+		  container.inventoryverbs = object.stackparent.stackverbs
+		  if (object.stackparent.stacklook = null) {
+		    object.stackparent.stacklook => {
+              d = NewStringDictionary()
+              dcount = 0
+			  alias = this.stackedalias
+			  count = this.stackedalias_count
+              OutputTextNoBr ("It's a stack of " + this.mainstack.stackname + ", containing ")
+              if (count = 0) {
+                msg ("nothing.")
+              }
+			  else {
+                foreach (obj, alias) {
+                  dcount = dcount + 1
+                  dictionary add (d, obj, ToString(dcount))
+                  if (ToInt(StringDictionaryItem(alias, obj)) = 1) {
+                    amount = "a"
+                  }
+                  else {
+                    amount = StringDictionaryItem(alias, obj)
+                  }
+                  if (count > 1) {
+                    if (not StringDictionaryItem(d, obj) = ToString(count)) {
+                      OutputTextNoBr (amount + " " + obj)
+                      if (amount = "a") {
+                        OutputTextNoBr (", ")
+                      }
+                      else {
+                        OutputTextNoBr ("s, ")
+                      }
+                    }
+                    else {
+                      OutputTextNoBr ("and " + amount + " " + obj)
+                      if (amount = "a") {
+                        msg (".")
+                      }
+                      else {
+                        msg ("s.")
+                      }
+					}
+                  }
+				  else {
+				    OutputTextNoBr (amount + " " + obj)
+					if (amount = "a") {
+					  msg (".")
+					}
+					else {
+					  msg ("s.")
+					}
+				  }
+                }
+              }
+            }
+		  }
+		  container.look = object.stackparent.stacklook
+		}
+		else {
+		  container = GetObject(object.stackparent.stackname + "_container")
+		  container.gender = "they"
+		  container.article = "them"
+		}
+	    if (object.stackparent.stacklimit = 0 or container.stacked_count < object.stackparent.stacklimit) {
+	      if (object.stackparent.alias = null) {
+		    object.stackparent.alias = object.stackparent.name
+		  }
+		  container.alias = object.stackparent.stackname
+		  container.originalalias = object.stackparent.stackname
+		  container.stacked_count = container.stacked_count + 1
+		  dictionary add (container.stacked, ToString(container.stacked_count), object)
+	      container.originalalias = container.alias
+	      container.alias = container.originalalias + ": " + ToString(container.stacked_count)
+	      if (DictionaryContains(container.stackedalias, object.alias)) {
+	        containsalias = true
+	      }
+	      else {
+	        containsalias = false
+	      }
+	      if (containsalias = false) {
+		    container.stackedalias_count = container.stackedalias_count + 1
+		    dictionary add (container.stackedalias, object.alias, ToString(1))
+	      }
+	      else {
+	        aliascount = ToInt(StringDictionaryItem(container.stackedalias, object.alias))
+	        dictionary remove (container.stackedalias, object.alias)
+		    dictionary add (container.stackedalias, object.alias, ToString(aliascount + 1))
+	      }
+	    }
+	  }
+	  object.stackedkey = container.stacked_count
+	}
+	else {
+	  msg (DynamicTemplate("CantStack", object))
+	}
+  ]]></function>
+  <function name="unstack" parameters="name, obj"><![CDATA[
+    container = GetObject(name + "_container")
+	if (obj = null) {
+	  container.stackedalias_list = NewStringList()
+	  foreach (alias, container.stackedalias) {
+	    list add (container.stackedalias_list, alias + ": " + StringDictionaryItem(container.stackedalias, alias))
+	  }
+	  if (container.mainstack.dropquestion = null) {
+	    container.mainstack.dropquestion = "Drop which one?"
+	  }
+	  show menu (container.mainstack.dropquestion, container.stackedalias_list, true) {
+	    if (result = null) {
+	      msg ("You decide not to drop anything.")
+	    }
+	    else {
+	      foreach (key, container.stacked) {
+	  	    object = ObjectDictionaryItem(container.stacked, key)
+		    if (object.alias + ": " + StringDictionaryItem(container.stackedalias, object.alias) = result) {
+		  	  if (container.objectholder = null) {
+			    container.objectholder = NewObjectDictionary()
+			    container.objectcount = 0
+			  }
+			  container.objectcount = container.objectcount + 1
+			  dictionary add (container.objectholder, ToString(container.objectcount), object)
+			  if (ToInt(StringDictionaryItem(container.stackedalias, object.alias)) > 1) {
+			    if (container.objectcount = ToInt(StringDictionaryItem(container.stackedalias, object.alias))) {
+			      object = null
+			      object = ObjectDictionaryItem(container.objectholder, ToString(1))
+				  container.stacked_objectdrop = object
+			    }  
+			  }
+			  else {
+			    container.stacked_objectdrop = object
+			  }
+		    }
+		  }
+		  object = container.stacked_objectdrop
+		  MoveObject(object, game.pov.parent)
+		  originalcount = container.stacked_count
+		  lastobject = ObjectDictionaryItem(container.stacked, ToString(container.stacked_count))
+		  objectkey = object.stackedkey
+		  if (objectkey = originalcount) {
+		    container.stacked_count = container.stacked_count - 1
+		    dictionary remove (container.stacked, ToString(originalcount))
+		  }
+		  if (objectkey <> originalcount) {
+		    if (container.stacked_count > 1) {
+		      dictionary remove (container.stacked, ToString(objectkey))
+		      dictionary add (container.stacked, ToString(objectkey), lastobject)
+		      dictionary remove (container.stacked, ToString(originalcount))
+			   lastobject.stackedkey = objectkey
+		    }
+		    container.stacked_count = container.stacked_count - 1
+		  }
+		  object.stackedkey = null
+		  aliascount = ToInt(StringDictionaryItem(container.stackedalias, object.alias))
+		  aliascount = aliascount - 1
+		  dictionary remove (container.stackedalias, object.alias)
+		  if (aliascount > 0) {
+		    dictionary add (container.stackedalias, object.alias, ToString(aliascount))
+		  }
+		  else {
+		    container.stackedalias_count = container.stackedalias_count - 1
+		  }
+		  if (container.stacked_count > 0) {
+		    container.alias = container.originalalias + ": " + container.stacked_count
+		    if (container.stacked_count = 1) {
+		      container.gender = "it"
+			  container.article = "it"
+		    }
+		  }
+	      if (container.stacked_count = 0) {
+	        destroy (name + "_container")
+	      }
+		  msg (DynamicTemplate("DropSuccessful", object))
+	    }
+	    container.stackedalias_list = null
+	    container.objectholder = null
+		container.stacked_objectdrop = null
+	  }
+	}
+	else if (not obj = null) {
+	  object = obj
+	  MoveObject(object, game.pov.parent)
+	  originalcount = container.stacked_count
+	  lastobject = ObjectDictionaryItem(container.stacked, ToString(container.stacked_count))
+	  objectkey = object.stackedkey
+	  if (objectkey = originalcount) {
+		container.stacked_count = container.stacked_count - 1
+		dictionary remove (container.stacked, ToString(originalcount))
+	  }
+	  if (objectkey <> originalcount) {
+	    if (container.stacked_count > 1) {
+	      dictionary remove (container.stacked, ToString(objectkey))
+		  dictionary add (container.stacked, ToString(objectkey), lastobject)
+		  dictionary remove (container.stacked, ToString(originalcount))
+		  lastobject.stackedkey = objectkey
+	    }
+	    container.stacked_count = container.stacked_count - 1
+	  }
+	  aliascount = ToInt(StringDictionaryItem(container.stackedalias, object.alias))
+	  aliascount = aliascount - 1
+	  dictionary remove (container.stackedalias, object.alias)
+	  if (aliascount > 0) {
+		dictionary add (container.stackedalias, object.alias, ToString(aliascount))
+	  }
+	  else {
+		container.stackedalias_count = container.stackedalias_count - 1
+	  }
+	  if (container.stacked_count > 0) {
+		container.alias = container.originalalias + ": " + container.stacked_count
+		if (container.stacked_count = 1) {
+		  container.gender = "it"
+		  container.article = "it"
+		}
+	  }
+	  if (container.stacked_count = 0) {
+	    destroy (name + "_container")
+	  }
+	}
+  ]]></function>
+  <function name="use_container" parameters="name"><![CDATA[
+    container = GetObject(name + "_container")
+    if (container.mainstack.childinheritscript) {
+	  if (container.mainstack.useinstack = null) {
+	    container.mainstack.useinstack => {
+		  msg (DynamicTemplate("CantUse", GetObject(this.stackname + "_container")))
+		}
+	  }
+	  do (container.mainstack, "useinstack")
+	}
+	else {
+      container.stackedalias_list = NewStringList()
+	  foreach (alias, container.stackedalias) {
+	    list add (container.stackedalias_list, alias + ": " + StringDictionaryItem(container.stackedalias, alias))
+	  }
+	  if (container.mainstack.usequestion = null) {
+	    container.mainstack.usequestion = "Use which one?"
+	  }
+      show menu (container.mainstack.usequestion, container.stackedalias_list, true) {
+	    if (result = null) {
+	      msg ("You decide not to use anything.")
+	    }
+	    else {
+	      foreach (key, container.stacked) {
+		    object = ObjectDictionaryItem(container.stacked, key)
+		    if (object.alias + ": " + StringDictionaryItem(container.stackedalias, object.alias) = result) {
+			  if (container.objectholder = null) {
+			    container.objectholder = NewObjectDictionary()
+				container.objectcount = 0
+			  }
+			  container.objectcount = container.objectcount + 1
+			  dictionary add (container.objectholder, ToString(container.objectcount), object)
+			}
+		  }
+		  object = null
+		  object = ObjectDictionaryItem(container.objectholder, ToString(1))
+		  do (object, "useinstack")
+		  object.used = true
+	    }
+	    container.stackedalias_list = null
+		container.objectholder = null
+	  }
+	}
+  ]]></function>
+  
+  <function name="enable_stacking"><![CDATA[
+	  take = take
+	  take.script => {
+        foreach (obj, object) {
+          if (HasBoolean(obj, "isstackable") = false) {
+  		    DoTake (obj, multiple)
+		  }
+	      else {
+	        DoStack (obj, multiple)
+	      }
+        }
+	  }
+    ]]></function>
+  
+  <editor>
+    <appliesto>(function)stack</appliesto>
+    <display>Take and stack object #0</display>
+    <category>Objects</category>
+    <create>stack ()</create>
+    <add>Take and stack objects</add>
+	
+	<control>
+	  <controltype>label</controltype>
+	  <caption>Stack object</caption>
+	</control>
+	
+	<control>
+	  <controltype>expression</controltype>
+	  <attribute>0</attribute>
+	  <simple>object</simple>
+	  <simpleeditor>objects</simpleeditor>
+	</control>
+	
+  </editor>
+  
+  <editor>
+    <appliesto>(function)unstack</appliesto>
+    <display>Drop object from container #0 (object #1)</display>
+    <category>Objects</category>
+    <create>unstack ("",)</create>
+    <add>Drop stacked object</add>
+	
+	<control>
+	  <controltype>label</controltype>
+	  <caption>Drop object from the stack named</caption>
+	</control>
+	
+	<control>
+	  <controltype>expression</controltype>
+	  <attribute>0</attribute>
+	  <simple>stack name</simple>
+	</control>
+	
+	<control>
+	  <controltype>label</controltype>
+	  <caption>Specific object (optional)</caption>
+	</control>
+	
+	<control>
+	  <controltype>expression</controltype>
+	  <attribute>1</attribute>
+	  <simple>object</simple>
+	  <nullable/>
+	</control>
+	
+  </editor>
+  
+  <editor>
+    <appliesto>(function)use_container</appliesto>
+    <display>Use container #0</display>
+	<category>Objects</category>
+    <create>use_container ("")</create>
+	<add>Use stacked object</add>
+	
+	<control>
+	  <controltype>label</controltype>
+	  <caption>Use object from the stack named</caption>
+	</control>
+	
+	<control>
+	  <controltype>expression</controltype>
+	  <attribute>0</attribute>
+	  <simple>stack name</simple>
+	</control>
+	
+  </editor>
+  
+  <editor>
+    <appliesto>(function)enable_stacking</appliesto>
+	<display>Enable stacking</display>
+	<category>Scripts</category>
+	<create>enable_stacking</create>
+	<add>Enable stacking</add>
+	
+	<control>
+	  <controltype>label</controltype>
+	  <caption>Enable stacking (should only be used in the start script)</caption>
+	</control>
+	
+  </editor>
+  
+  <type name="stack_container">
+    <parent type="object">game</parent>
+	<drop type="script">
+	  container = this.mainstack.stackname
+	  unstack (container, null)
+	</drop>
+  </type>
+  
+  <type name="stack_object">
+    <isstackable />
+	<drop type="boolean">false</drop>
+	<take />
+  </type>
+  
+  <type name="mainstack_object">
+    <inherit name="stack_object" />
+	<mainstack />
+	<childstack type="boolean">false</childstack>
+	<childinheritscript type="boolean">false</childinheritscript>
+	<stacklimit type="int">0</stacklimit>
+    <stackverbs type="simplestringlist">[LookAt];[Use];[Drop]</stackverbs>
+  </type>
+  
+  <type name="childstack_object">
+    <inherit name="stack_object" />
+	<childstack />
+	<mainstack type="boolean">false</mainstack>
+  </type>
+  
+  <function name="DoStack" parameters="object, ismultiple">
+	prefix = ""
+    if (ismultiple) {
+      prefix = GetDisplayAlias(object) + ": "
+    }
+    
+    if (object.parent.parent = game.pov) {
+      msg (prefix + DynamicTemplate("AlreadyTaken", object))
+    }
+    else if (not ListContains(ScopeReachable(), object)) {
+      msg (prefix + DynamicTemplate("ObjectNotOpen", GetBlockingObject(object)))
+    }
+    else {
+      stack (object)
+      if (object.childstack) {
+        container = GetObject(object.stackparent.stackname + "_container")
+	  }
+	  else if (object.mainstack) {
+	    container = GetObject(object.stackname + "_container")
+	  }
+    
+      volume = 0
+      continue = true
+      
+      foreach (obj, GetAllChildObjects(game.pov)) {
+        if (HasInt(obj, "volume")) {
+          volume = volume + obj.volume
+        }
+      }
+    
+      if (not Contains(game.pov, object)) {
+        volume = volume + GetVolume(object,true)
+      }
+	  
+      children = GetDirectChildren(container)
+      if (GetInt(container.mainstack, "stacklimit") > 0) {
+        if (ListCount(children) >= container.mainstack.stacklimit) {
+          continue = false
+          if (HasString(container.mainstack, "stacklimitreached")) {
+            message = prefix + container.mainstack.stacklimitreached
+          }
+          else {
+            message = prefix + "You can only carry " + container.mainstack.stacklimit + " " + container.mainstack.stackname
+          }
+        }
+      }
+    
+      if (continue = false) {
+        msg (message)
+      }
+      else {
+        found = true
+        takemsg = object.takemsg
+      
+        switch (TypeOf(object, "take")) {
+          case ("script") {
+            if (ismultiple) {
+              msg (prefix)
+            }
+            do (object, "take")
+            takemsg = ""
+          }
+          case ("boolean") {
+            if (object.take = true) {
+              MoveObject(object, container)
+              if (takemsg = null) {
+                takemsg = DynamicTemplate("TakeSuccessful", object)
+              }
+            }
+            else {
+              found = false
+            }
+          }
+          case ("string") {
+            object.parent = container
+            takemsg = object.take
+          }
+          default {
+            found = false
+          }
+        }
+      
+        if (not found and takemsg = null) takemsg = DynamicTemplate("TakeUnsuccessful", object)
+      
+        if (LengthOf(takemsg) > 0) {
+          msg (prefix + takemsg)
+          if (GetBoolean ( object , "scenery" )) {
+            object.scenery=false
+          }
+        }
+      
+        if (HasScript(object, "ontake")) {
+          do (object, "ontake")
+        }
+      }
+    }
+  </function>
+  
+  <dynamictemplate name="CantStack">CapFirst(object.article) + " is not stackable."</dynamictemplate>
+  
+</library>
