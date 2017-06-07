@@ -77,6 +77,15 @@
   
   
   <!--
+  Use an item from the given stack. If there is more than one
+  there, the player will be asked to choose.
+  -->
+  <function name="DoStackVerb" parameters="container, verb"><![CDATA[
+    DoStackStuff(container, null, verb, CapFirst(verb) + " which one?")
+  ]]></function>
+  
+  
+  <!--
   Do something with an item from the given stack. If there is more than one
   there, the player will be asked to choose.
   This will then call a script on the object, if script is not null, or
