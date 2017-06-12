@@ -7,11 +7,11 @@
 
 
   <!--
-  StackLib v1.0
+  StackLib v1.1
   
-  Quest version: 5.6
+  Quest version: 5.6 (ideally 5.7 for pile of cash)
   Written by: The Pixie, 2016-2017
-  Inspied by Sora's stackable library
+  Inspired by Sora's stackable library
 
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/StackLibrary
@@ -105,17 +105,14 @@
   s is the prompt.
   -->
   <function name="DoStackStuff" parameters="container, functionname, scriptname, s"><![CDATA[
-    if (ListCount(GetDirectChildren(container)) = 1) {
-      if (not scriptname = null) {
-        //msg("here")
-        //msg(ObjectListItem(GetDirectChildren(container), 0))
-        PrintOrRun(ObjectListItem(GetDirectChildren(container), 0), scriptname)
-        SetStack(container)
-      }
-      else {
-        game.tempobj = ObjectListItem(GetDirectChildren(container), 0)
-        f = Eval (functionname + "(game.tempobj)")
-      }
+    //msg("container="+container)
+    //msg("functionname="+functionname)
+    //msg("scriptname="+scriptname)
+    //msg("s="+s)
+    if (container.homogeneous or ListCount(GetDirectChildren(container)) = 1) {
+      game.functionname_tmp = functionname
+      game.scriptname_tmp = scriptname
+      DoingStackStuff(ObjectListItem(GetDirectChildren(container), 0))
     }
     else {
       dic = NewStringDictionary()
@@ -125,23 +122,24 @@
       game.functionname_tmp = functionname
       game.scriptname_tmp = scriptname
       ShowMenu (s, dic, true) {
-        if (result = null) {
-          msg ("You decide not to drop anything.")
-        }
-        else {
-          game.tempobj = GetObject(result)
-          if (not game.scriptname_tmp = null) {
-            PrintOrRun(game.tempobj, game.scriptname_tmp)
-          }
-          else {
-            game.tempobj = GetObject(result)
-            f = Eval (game.functionname_tmp + "(game.tempobj)")
-          }
+        if (not result = null) {
+          DoingStackStuff(GetObject(result))
         }
       }
     }
   ]]></function>
   
+  <function name="DoingStackStuff" parameters="obj"><![CDATA[
+    stack = obj.parent
+    if (not game.scriptname_tmp = null) {
+      PrintOrRun(obj, game.scriptname_tmp)
+    }
+    else {
+      game.tempobj = obj
+      f = Eval (game.functionname_tmp + "(game.tempobj)")
+    }
+    SetStack(stack)
+  ]]></function>
   
   
   
@@ -182,6 +180,7 @@
   
   <type name="stack_container">
     <parent type="object">game</parent>
+    <homogeneous type="boolean">false</homogeneous>
     <drop type="script">
       Unstack (this)
     </drop>
@@ -196,6 +195,10 @@
     </look>
   </type>
   
+  <type name="homo_stack_container">
+    <inherit name="stack_container" />
+    <homogeneous/>
+  </type>
  
   <type name="childstack_object">
     <isstackable />
@@ -203,12 +206,28 @@
     <takemsg>You take it.</takemsg>
     <take type="script">
       if (this.alias = null) {
-        this.alias = object.name
+        this.alias = this.name
       }
       container = this.stackparent
 
       this.parent = container
       SetStack(container)
+      if (this.takemsg = null) {
+        msg(DynamicTemplate("TakeSuccessful", object))
+      }      
+      else {
+        msg (this.takemsg)
+      }
+    </take>
+  </type>
+  
+  <type name="cash_object">
+    <drop type="boolean">false</drop>
+    <money type="int">1</money>
+    <takemsg>You take it.</takemsg>
+    <take type="script">
+      this.parent = null
+      game.pov.money = game.pov.money + this.money
       if (this.takemsg = null) {
         msg(DynamicTemplate("TakeSuccessful", object))
       }      
@@ -230,7 +249,7 @@
     
     <control>
       <controltype>dropdowntypes</controltype>
-      <types>*=Not stackable; stack_container=The stack itself; childstack_object=Member of a stack</types>
+      <types>*=Not stackable; stack_container=Heterogeneous stack; homo_stack_container=Homogeneous stack;childstack_object=Member of a stack;cash_object=Pile of cash</types>
       <caption>Stack</caption>
     </control>
     
@@ -239,6 +258,13 @@
       <attribute>stackparent</attribute>
       <mustinherit>childstack_object</mustinherit>
       <caption>Stack container</caption>
+    </control>
+    
+    <control>
+      <controltype>number</controltype>
+      <attribute>money</attribute>
+      <mustinherit>cash_object</mustinherit>
+      <caption>Amount</caption>
     </control>
   </tab>
 
