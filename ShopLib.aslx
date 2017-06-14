@@ -16,13 +16,12 @@
   -->
 
 
-  <delegate name="script_returns_price" type="int" />
 
   <dynamictemplate name="TakeSuccessful">"You pick " + object.article + " up."</dynamictemplate>
   <dynamictemplate name="NotForSale">"Sorry " + GetDisplayName(object) + " is not for sale."</dynamictemplate>
   <dynamictemplate name="CannotAfford">"You look longingly at " + GetDisplayName(object) + ", but you cannot afford it."</dynamictemplate>
-  <dynamictemplate name="BuySuccessful">"You buy " + GetDisplayName(object) + " for " + DisplayMoney(_GetBuyingPrice(object)) + "."</dynamictemplate>
-  <dynamictemplate name="SellSuccessful">"You sell " + GetDisplayName(object) + " for " + DisplayMoney(_GetSellingPrice(object)) + "."</dynamictemplate>
+  <dynamictemplate name="BuySuccessful">"You buy " + GetDisplayName(object) + " for " + DisplayMoney(BuyingPrice(object)) + "."</dynamictemplate>
+  <dynamictemplate name="SellSuccessful">"You sell " + GetDisplayName(object) + " for " + DisplayMoney(SellingPrice(object)) + "."</dynamictemplate>
   <dynamictemplate name="NotAShop">"Where do you think you are, a shop or something?"</dynamictemplate>
   <dynamictemplate name="BuyOnly">"You cannot sell things here - only buy."</dynamictemplate>
   <dynamictemplate name="NoPrice">"No one wants to buy " + GetDisplayName (object) + "."</dynamictemplate>
@@ -50,10 +49,16 @@
       if (_PreBuy()) {
         sl = NewStringDictionary ()
         foreach (obj, GetStock ()) {
-          dictionary add (sl, obj.name, GetDisplayAlias (obj) + " (" + DisplayMoney(_GetBuyingPrice(obj)) + ")")
+          dictionary add (sl, obj.name, CapFirst(GetDisplayAlias (obj)) + " (" + DisplayMoney(BuyingPrice(obj)) + ")")
+        }
+        if (GetBoolean(game, "addnothingtoshoplist")) {
+          dictionary add(sl, "Nothing", "Nothing")
         }
         ShowMenu (DynamicTemplate("ShopMenuHeader", game), sl, true) {
-          if (not result = null) {
+          if (result = "Nothing") {
+            DoDecline(game.pov.parent.shopstock)
+          }
+          else if (not result = null) {
             obj = GetObject (result)
             DoBuy (obj)
           }
@@ -81,7 +86,7 @@
         msg (DynamicTemplate("NoPrice", object))
       }
       else {
-        value = _GetSellingPrice(object)
+        value = SellingPrice(object)
         game.pov.money = game.pov.money + value
         msg (DynamicTemplate("SellSuccessful", object))
         if (GetBoolean (object, "destroyonsale")) {
@@ -109,7 +114,7 @@
         foreach (object, GetDirectChildren(game.pov)) {
           if (GetBoolean (object, "destroyonsale")) {
             if (HasInt(object, "price")) {
-              value = _GetSellingPrice(object)
+              value = SellingPrice(object)
               game.pov.money = game.pov.money + value
               P (DynamicTemplate("SellSuccessful", obj))
               object.parent = dead
@@ -126,7 +131,7 @@
   <function name="ShopInventory" type="string">
     sl = NewStringList ()
     foreach (obj, GetStock ()) {
-      list add (sl, GetDisplayName (obj) + " (" + DisplayMoney(_GetBuyingPrice(obj)) + ")")
+      list add (sl, GetDisplayName (obj) + " (" + DisplayMoney(BuyingPrice(obj)) + ")")
     }
     return (Join (sl, ", "))
   </function>
@@ -160,7 +165,7 @@
         msg (DynamicTemplate("NotForSale", obj))
       }
       else {
-        buyingprice = _GetBuyingPrice(obj)
+        buyingprice = BuyingPrice(obj)
         if (buyingprice > game.pov.money) {
           msg (DynamicTemplate("CannotAfford", obj))
         }
@@ -240,11 +245,15 @@
   <function name="GetStock" type="objectlist">
     ol = NewObjectList ()
     if (HasObject (game.pov.parent, "shopstock")) {
+    msg("looking in " + game.pov.parent.shopstock.name)
       foreach (obj, GetDirectChildren (game.pov.parent.shopstock)) {
         if (HasInt (obj, "price")) {
           list add (ol, obj)
         }
       }
+    }
+    else {
+        msg("no stock for " + game.pov.parent.name)
     }
     return (ol)
   </function>
@@ -252,29 +261,6 @@
 
 
 
-  <!--
-  Sets the mark up for buying goods across the world to be twice their price attribute.
-  -->
-  <function name="_GetBuyingPrice" parameters="obj" type="int"><![CDATA[
-    if (HasDelegateImplementation (obj, "buyingprice")) {
-      return (RunDelegateFunction(obj, "buyingprice"))
-    }
-    else {
-      return (BuyingPrice(obj.price))
-    }
-  ]]></function>
-
-  <!--
-  Sets the mark up for selling goods across the world to be their price attribute.
-  -->
-  <function name="_GetSellingPrice" parameters="obj" type="int"><![CDATA[
-    if (HasDelegateImplementation (obj, "sellingprice")) {
-      return (RunDelegateFunction(obj, "sellingprice"))
-    }
-    else {
-      return (SellingPrice(obj.price))
-    }
-  ]]></function>
 
 
 
@@ -298,6 +284,13 @@
   ]]></function>
 
   <function name="UpdateInventoryCounts">
+  </function>
+
+  <!--
+  Override this to have a message if the player decides not to buy
+  (by default, nothing happens)
+  -->
+  <function name="DoDecline" parameters="stockroom">
   </function>
 
   <function name="DisplayMoney" parameters="value" type="string">
