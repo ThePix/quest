@@ -7,7 +7,9 @@
 
 
   <!--
-  ClockLib v3.0
+  ClockLib v3.1
+  
+  Version 3.1 adds functionality for displaying dates.
   
   Quest version: 5.6
   Written by: The Pixie, 2011-2016
@@ -31,6 +33,7 @@
     <changedtime type="script">
       JS.eval("$('#clock').html('" + TimeAsString() + "');")
     </changedtime>
+    <startyear type="int">2000</startyear>
   </object>
   
   <command name="clock">
@@ -121,8 +124,18 @@
         do(step, "look")
       }
       game.clock = TimeAsString()
+      IncUserTime
     }
   ]]></function>
+
+
+  <!--
+  Can be overridden to have stuff happened each minute.
+  This will fire after any event scheduled for this time.
+  -->  
+  <function name="IncUserTime">
+  </function>
+  
 
 
   <!--
@@ -261,5 +274,64 @@
     msg(s)
   </function> 
 
+  <!--
+  Displays the the date as a string. Dates are relative to the year game_clock.startyear, which is 2000 by default.
+  You can override DisplayDate to alter how the date is actually shown.
+  Day 1 is the first of January, 2000 (or whatever year you set game_clock.startyear to). This means you must set the day to 
+  greater than zero in set time.
+  Note that this is an approximation to the Gregorian Calendar; it will handle simple leap years, but is not perfect.
+  It will consider 1900, for example, to be a leap year, however, it is fine for 1901 to 2099, which should cover most games.
+  This could be readily adapted for a fantasy calender.
+  -->
+  <function name="Date" type="string">
+    year = game_clock.startyear
+    day = game_clock.days
+    if (1 > day) error("Date function cannot cope with a day of zero or less")
+    // what year is it?
+    flag = true
+    while (flag) {
+      if (year % 4 = 0) {
+        days_this_year = 366
+      }
+      else {
+        days_this_year = 365
+      }
+      if (day > days_this_year) {
+        year = year + 1
+        day = day - days_this_year
+      }
+      else {
+        flag = false
+      }
+    }
+    // days in month
+    if (year % 4 = 0) {
+      days_in_months = Split("31;29;31;30;31;30;31;31;30;31;30;31", ";")
+    }
+    else {
+      days_in_months = Split("31;28;31;30;31;30;31;31;30;31;30;31", ";")
+    }
+    // what month is it?
+    month = 1
+    for (i, 0, 11) {
+      days_in_month = ToInt(StringListItem(days_in_months, i))
+      if (day > days_in_month) {
+        month = month + 1
+        day = day - days_in_month
+      }
+      else {
+        return (DisplayDate(year, month, day))
+      }
+    }
+  </function>
+  
+  <!--
+  Shows the date, nicely formatted
+  -->
+  <function name="DisplayDate" parameters="year, month, day" type="string">
+    months = Split(";January;February;March;April;May;June;July;August;September;October;November;December", ";")
+    return ("" + day + "th of " + StringListItem(months, month) + ", " + year)
+  </function> 
+  
   
 </library>
