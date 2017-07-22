@@ -20,6 +20,9 @@
     <description type="script">
       DescribeHub
     </description>
+    <enter type="script">
+      HubEnterScript
+    </enter>
     <object name="player">
       <inherit name="editor_object" />
       <inherit name="editor_player" />
