@@ -34,6 +34,10 @@
     msg ("Group project!")
   </function>
 
+  <function name="HubEnterScript">
+    msg ("So this is the hub...")
+  </function>
+
   <function name="StartMeElsewhere" parameters="obj, roomname">
     room = GetObject(roomname)
     if (room = null) {
