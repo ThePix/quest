@@ -2,7 +2,7 @@
   <command name="TravelToHub">
     <pattern>travel</pattern>
     <script>
-      if (GetBoolean(player.parent, "gateway")) {
+      if (GetBoolean(player.parent, "gateway") or player.cantravelfromanywhere) {
         msg (this.travelmsg)
         player.parent = hub
       }
@@ -42,6 +42,7 @@
 
   <function name="HubEnterScript">
     msg ("So this is the hub...")
+    player.cantravelfromanywhere = false
   </function>
 
   <function name="StartMeElsewhere" parameters="obj, roomname">
@@ -54,11 +55,31 @@
     }
   </function>
 
-  <function name="Combined" type="boolean">
+  <function name="IsCombined" type="boolean">
     return (false)
   </function>
   
-  <type name="gateway_type"/>
+  <function name="IsDimensionCompleted" parameters="gateway" type="boolean">
+    return (gateway.completed)
+  </function>
+  
+  <function name="AreAllDimensionsCompleted" type="boolean">
+    flag = true
+    foreach (obj, GetDirectChildren(destinations)) {
+      if (not obj.to.completed) {
+        flag = false
+      }
+    }
+    return (flag)
+  </function>
+  
+  <function name="DimensionComplete" parameters="gateway">
+    gateway.completed = true
+  </function>
+  
+  <type name="gateway_type">
+    <completed type="boolean">false</completed>
+  </type>
   
   <!-- Interface -->
   <tab>
