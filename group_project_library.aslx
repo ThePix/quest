@@ -55,10 +55,6 @@
     }
   </function>
 
-  <function name="IsCombined" type="boolean">
-    return (false)
-  </function>
-  
   <function name="IsDimensionCompleted" parameters="gateway" type="boolean">
     return (gateway.completed)
   </function>
