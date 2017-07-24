@@ -12,6 +12,7 @@
     <start type="script">
       StartScript
     </start>
+    <combined type="boolean">false</combined>
   </game>
   <object name="hub">
     <inherit name="editor_room" />
