@@ -15,9 +15,15 @@
   
   
   <function name="AddToHubGateway" parameters="room">
-    if (not ListContains(hub.destinations, room)) {
-      list add (hub.destinations, room)
-    }
+    name = room.name + "_destination"
+    if (not GetObject(name) = null) error ("Something has gone wrong, and a destination is being added to the hub a second time.")
+    create (name)
+    obj = GetObject (name)
+    obj.parent = destinations
+    obj.look = room.dimensionderscription
+    obj.alias = room.dimensionname
+    obj.to = room
+    obj.linkcolour = room.dimensioncolour
   </function>
   
   <function name="DescribePlayer">
@@ -51,4 +57,47 @@
   <function name="Combined" type="boolean">
     return (false)
   </function>
+  
+  <type name="gateway_type"/>
+  
+  <!-- Interface -->
+  <tab>
+    <parent>_ObjectEditor</parent>
+    <caption>Gateway</caption>
+    <mustinherit>gateway_type</mustinherit>
+
+    <control>
+      <caption>Dimension name</caption>
+      <controltype>textbox</controltype>
+      <attribute>dimensionname</attribute>
+    </control>
+
+    <control>
+      <caption>Dimension description</caption>
+      <controltype>richtext</controltype>
+      <attribute>dimensionderscription</attribute>
+    </control>
+
+    <control>
+      <caption>Start script</caption>
+      <controltype>script</controltype>
+      <attribute>_initialise_</attribute>
+    </control>
+
+    <control>
+      <controltype>label</controltype>
+      <caption>This will run when the game starts. The first line must be "AddToHubGateway (this)"</caption>
+    </control>
+
+    <control>
+      <controltype>dropdown</controltype>
+      <caption>Link colour (when travelling from hub)</caption>
+      <attribute>dimensioncolour</attribute>
+      <validvalues type="simplestringlist">[HTMLColorNames]</validvalues>
+      <freetext/>
+    </control>
+
+  </tab>    
+  
+  
 </library>
