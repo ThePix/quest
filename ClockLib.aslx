@@ -7,12 +7,13 @@
 
 
   <!--
-  ClockLib v3.1
+  ClockLib v3.2
   
   Version 3.1 adds functionality for displaying dates.
+  Version 3.2 displays noon as "12 noon" and midnight as "1 midnight"
   
   Quest version: 5.6
-  Written by: The Pixie, 2011-2016
+  Written by: The Pixie, 2011-2017
 
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/Clock-Library
@@ -79,6 +80,12 @@
   </turnscript>
 
   <function name="TimeAsString" type="string"><![CDATA[
+    if (game_clock.minutes = 0 and game_clock.hours24 = 0) {
+      return (" 12 midnight")
+    }
+    if (game_clock.minutes = 0 and game_clock.hours24 = 12) {
+      return (" 12 noon")
+    }
     hours = game_clock.hours24 % 12
     if (hours = 0) {
       hours = 12
@@ -116,7 +123,7 @@
         do(o, "look")
       }
       else if (game_clock.countdown < 0 and HasAttribute(game_clock, "nextstep")) {
-        if (game_clock.testing) msg("Step found: " + game_clock.nextstep + " (" + game_clock.nextstep.alias + ")")
+        if (game_clock.testing) msg("{colour:silver:Step found: " + game_clock.nextstep + " (" + game_clock.nextstep.alias + ")}")
         // this is used by wait
         game_clock.event = true
         step = game_clock.nextstep
