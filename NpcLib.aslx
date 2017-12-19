@@ -7,10 +7,13 @@
 
 
   <!--
-  NpcLib v1.0
+  NpcLib v1.1
   
   Quest version: 5.7
   Written by: The Pixie, 2017
+  
+  Note that this version requires PathLib by Jay Nabonne
+  http://docs.textadventures.co.uk/quest/libraries/path_library.html
 
   -->
 
@@ -31,7 +34,7 @@
   
   
   
-  <turnscript name="NpcTurns">
+  <turnscript name="NpcTurnScript">
     <enabled/>
     <script>
       foreach (o, AllObjects()) {
@@ -61,13 +64,11 @@
   
   <function name="NpcAct" parameters="npc, s" type="boolean">
     ary = Split(s, ":")
-    msg ("Doing " + s)
     if (ListCount(ary) = 1) {
       PrintIfHere (npc.parent, s)
       f = true
     }
     else {
-      msg (ListCount(ary))
       game.currentobj = GetObject (StringListItem(ary, 1))
       if (game.currentobj = null) {
         error ("Failed to find object: " + StringListItem(ary, 1))
@@ -101,7 +102,7 @@
   </function>
 
   <function name="NpcWait" parameters="npc, obj" type="boolean">
-    if (obj = game.pov) {
+    if (obj = game.pov or HasScript(obj, "takeaturn")) {
       return (npc.parent = obj.parent)
     }
     else if (HasBoolean(obj, "locked")) {
@@ -121,11 +122,7 @@
   <function name="NpcSearch" parameters="npc, obj" type="boolean">
     exit = PickOneUnlockedExit (npc.parent)
     oldroom = npc.parent
-    npc.parent = exit.to
-    if (not oldroom = npc.parent) {
-      PrintIfHere (oldroom, GetDisplayName(npc) + " leaves the room.")
-      PrintIfHere (npc.parent, GetDisplayName(npc) + " enters the room.")
-    }
+    NpcMove(npc, exit.to)
     return (obj.parent = npc.parent)
   </function>
 
@@ -179,6 +176,104 @@
     return (true)
   </function>
 
+  <function name="NpcPause" parameters="npc, obj" type="boolean">
+    return (true)
+  </function>
+
+  <function name="NpcGoTo" parameters="npc, obj" type="boolean">
+    l = PathLib_GetPathExt(npc.parent, obj, AllExits(), -1)
+    if (ListCount(l) = 0) {
+      return (true)
+    }
+    exit = ObjectListItem(l, 0)
+    NpcMove (npc, exit.to)
+    return (ListCount(l) = 1)
+  </function>
+
+  <function name="NpcScript" parameters="npc, obj" type="boolean">
+    npc.deletefromlist = true
+    if (HasScript (npc, "npcscript")) {
+      d = NewDictionary()
+      dictionary add (d, "item", obj)
+      do (npc, "npcscript", d)
+    }
+    return (npc.deletefromlist)
+  </function>
+
+  
+  
+  
+  <!-- Find a path from start to end using a set of exits and maxlength passed. -->
+  <function name="PathLib_GetPathExt" parameters="start, end, exits, maxlength" type="objectlist">
+    <![CDATA[
+    // From PathLib by Jay Nabonne
+    //msg("GetPathExt from " + start + " to " + end)
+    // It is more efficient to mark the rooms rather than track them in lists.
+    if (not HasInt(game, "pathID")) {
+      game.pathID = 0
+    }
+    // Bump the path ID for this path. This saves us from having to unmark all previously marked rooms.
+    game.pathID = game.pathID + 1
+
+    path = null
+    current = NewList()
+    entry = _PathLib_AddEntry(current, start)
+    dictionary add(entry, "path", NewObjectList())
+    length = 0
+    iterations = 0
+  	while (ListCount(current) <> 0 and path = null and (maxlength = -1 or length <= maxlength)) {
+      iterations = iterations + 1
+      //msg("iterations = " + iterations)
+  		entry = current[0]
+  		list remove(current, entry)
+      room = entry["room"]
+      //msg("room = " + room.name)
+      room.pathlib_visited = game.pathID
+      //msg("entry=" + entry)
+      if (room = end) {
+        path = entry["path"]
+        //msg("path=" + path)
+      } else {
+        foreach (exit, exits) {
+          toRoom = exit.to
+          //msg("toRoom = " + toRoom)
+          if (toRoom <> null) {
+            if (exit.parent = room and not GetBoolean(exit, "excludeFromPaths")) {
+              // This is a room to be investigated.
+              if (GetInt(toRoom, "pathlib_current") <> game.pathID and GetInt(toRoom, "pathlib_visited") <> game.pathID) {
+                // We have not touched this room yet. Add its exit to the list.
+                newEntry = _PathLib_AddEntry(current, toRoom)
+                // Assign to an object attribute to force a copy.
+                game.PathLib_pathtemp = entry["path"]
+                list add(game.PathLib_pathtemp, exit)
+                dictionary add(newEntry, "path", game.PathLib_pathtemp)
+                game.PathLib_pathtemp = null
+                //msg("Added")
+              }
+            }
+          }
+        }
+      }
+      length = ListCount(entry["path"])
+  	}
+    //msg("iterations = " + iterations + ", path count = " + ListCount(path))
+  	return (path)
+    ]]>
+  </function>
+
+  <!-- Add a room entry to the list. -->
+  <function name="_PathLib_AddEntry" parameters="list, room" type="dictionary">
+    // From PathLib by Jay Nabonne
+    <!-- msg ("Add entry: " + room.name + "(length:" + ListCount(list) + ")") -->
+    entry = NewDictionary()
+    dictionary add(entry, "room", room)
+    list add(list, entry)
+    room.pathlib_current = game.pathID
+    return (entry)
+  </function>
+  
+  
+  
   
   
   <!-- Interface -->
@@ -242,7 +337,7 @@
       <controltype>label</controltype>
       <caption>Search: NPC will move via a random exit, and will continue to do so until in the same room as the indicated item</caption>
     </control>
-      
+
     <control>
       <controltype>label</controltype>
       <caption>Wait: NPC will wait, and will continue to do so until the player is the same room if the indicated item is the player, or the indicated item is unlocked if it has a "locked" attribute, or until given the indicated item otherwise.</caption>
@@ -250,9 +345,32 @@
       
     <control>
       <controltype>label</controltype>
+      <caption>Pause: NPC does nothing for one turn.</caption>
+    </control>
+      
+    <control>
+      <controltype>label</controltype>
+      <caption>Script: Runs the NPC's "npcscript" script. If this sets the NPC's "deletefromlist" attribute to false, then this will rin again next turn.</caption>
+    </control>
+      
+    <control>
+      <controltype>label</controltype>
       <caption>You can add your own verbs; add a new function called "Npc", followed by the verb, have it return a Boolean, and take two attributes, the NPc and the item.</caption>
     </control>
       
+    <control>
+      <controltype>title</controltype>
+      <caption>Script</caption>
+    </control>
+      
+    <control>
+      <controltype>script</controltype>
+      <caption>NPC script (run with NpcScript)</caption>
+      <attribute>npcscript</attribute>
+      <width>200</width>
+      <mustinherit>NpcType</mustinherit>
+    </control>
+    
   </tab>
   
   
