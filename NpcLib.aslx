@@ -7,30 +7,66 @@
 
 
   <!--
-  NpcLib v1.1
+  NpcLib v1.2
+  
+  Documentation here:
+  http://docs.textadventures.co.uk/quest/independent_npcs.html
+  
   
   Quest version: 5.7
   Written by: The Pixie, 2017
   
-  Note that this version requires PathLib by Jay Nabonne
+  
+  As of version 1.1:
+  This uses functions from PathLib by Jay Nabonne to give the GoTo command
   http://docs.textadventures.co.uk/quest/libraries/path_library.html
 
+  
+  As of version 1.2
+  If you use ConvLib, an NPC will be automatically paused, but this has to be after ConvLib!
+  
+  You can add an "npc_using" script to an exit to have that run instead of the standard
+  phrase for moving. It has access to a local variable "npc". 
+  It will need to check for itself if the player is present to see it happened
+  (or use PrintIfHere).
+  For standard moves, you can now override the templates below, or the NpcLeaving function
+  (which   tells the player which way the NPC was heading).
+  
+  If game.npcdebug is set to true, you will see debugging info in blue; this will tell you
+  what NPCs are dong and planning to do, which should help you work out why they are not behaving.
+  
+  There are also groups now; NPCs can join groups and act together whilst in the group.
+  Discussion here
+  http://textadventures.co.uk/forum/samples/topic/1gpwpfattuyocvlg1sievq/controlling-npcs
+  
   -->
 
+  <dynamictemplate name="NpcEnters">GetDisplayName(object) + " enters the room."</dynamictemplate>
+  <dynamictemplate name="NpcLeaves">GetDisplayName(object) + " leaves the room."</dynamictemplate>
   
   
   <type name="NpcType">
     <takeaturn type="script"><![CDATA[
-      if (ListCount(this.actions) > 0) {
+      PrintIfDebug (this, "Outstanding actions: " + Join(this.actions, ","))
+      if (ListCount(this.actions) > 0 and not HasAttribute(this, "group")) {
         s = StringListItem(this.actions, 0)
+        PrintIfDebug (this, "Doing: " + s)
         if (NpcAct (this, s)) {
           list remove (this.actions, s)
+          PrintIfDebug (this, "Deleted")
         }
       }
     ]]></takeaturn>
   </type>
 
   
+  <type name="GroupType">
+    <inherit name="NpcType" />
+    <resetalias type="script"><![CDATA[
+      this.alias = FormatList (GroupMembers(this), ", ", " and ", "no one")
+    ]]></resetalias>
+    <visible type="boolean">false</visible>
+  </type>
   
   
   
@@ -53,15 +89,70 @@
 
   
   
+  <function name="PrintIfDebug" parameters="o, s"><![CDATA[
+    if (GetBoolean(game, "npcdebug")) {
+      msg ("{color:blue:{i:" + o.name + "} " + s + "}")
+    }
+  ]]></function>
 
-
+  
+  
   <function name="PrintIfHere" parameters="room, s">
     if (game.pov.parent = room) {
       msg (s)
     }
   </function>
   
+
+  <!--
+  Overrides function in ConvLib so NPCs get paused when the player talks to them.
+  -->
+  <function name="AfterTopicEvent">
+    Pause (game.conversationalist)
+  </function>
   
+  
+  
+  <!--
+  Gets a list of members of the given grpup
+  -->
+  <function name="GroupMembers" parameters="group" type="objectlist">
+    return (FilterByAttribute(AllObjects(), "group", group))
+  </function>
+
+
+  
+  <!--
+  Gets a single member of a group (or the NPC if this is an NPC).
+  Used for when we want one member of the group to open the door or whatever.
+  -->
+  <function name="Member" parameters="group" type="object">
+    if (DoesInherit(group, "GroupType")) {
+      return (PickOneObject(FilterByAttribute(AllObjects(), "group", group)))
+    }
+    else {
+      return (group)
+    }
+  </function>
+
+
+  
+  <!--
+  Pauses the NPC or the group she belongs to for one turn.
+  -->
+  <function name="Pause" parameters="npc">
+    if (HasAttribute(npc, "group")) {
+      npc.group.paused = true
+    }
+    else {
+      npc.paused = true
+    }
+  </function>
+  
+  
+  <!--
+  Heart of the NPC system; NPC will do one action.
+  -->
   <function name="NpcAct" parameters="npc, s" type="boolean">
     ary = Split(s, ":")
     if (ListCount(ary) = 1) {
@@ -82,12 +173,62 @@
   <function name="NpcMove" parameters="npc, obj" type="boolean">
     oldroom = npc.parent
     npc.parent = obj
+    if (DoesInherit(npc, "GroupType")) {
+      foreach (o, GroupMembers(npc)) {
+        o.parent = obj
+      }
+    }
     if (not oldroom = npc.parent) {
-      PrintIfHere (oldroom, GetDisplayName(npc) + " leaves the room.")
-      PrintIfHere (npc.parent, GetDisplayName(npc) + " enters the room.")
+      exitname = GetExitByLink (oldroom, npc.parent)
+      handled = false
+      if (not exitname = null) {
+        exit = GetObject(exitname)
+        d = NewDictionary()
+        dictionary add (d, "npc", npc)
+        if (HasScript(exit, "npc_using")) {
+          do (exit, "npc_using", d)
+          handled = true
+        }
+        else if (oldroom = player.parent) {
+          NpcLeaving (npc, exit)
+          handled = true
+        }
+      }
+      if (not handled) {
+        PrintIfHere (oldroom, DynamicTemplate("NpcLeaves", npc))
+        PrintIfHere (npc.parent, DynamicTemplate("NpcEnters", npc))
+      }
     }
     return (true)
   </function>
+  
+  <!--
+  Used by NpcMove to describe the NPC leaving the current room, giving the direction headed.
+  -->
+  <function name="NpcLeaving" parameters="npc, exit" type="boolean">
+    msg(GetDisplayName(npc) + " leaves, heading " + exit.alias + ".")
+  </function>
+  
+  
+  <function name="NpcWait" parameters="npc, obj" type="boolean">
+    if (obj = game.pov or HasScript(obj, "takeaturn")) {
+      return (npc.parent = obj.parent)
+    }
+    else if (HasBoolean(obj, "locked")) {
+      return (not obj.locked)
+    }
+    else {
+      return (npc = obj.parent)
+    }
+  </function>
+
+  <function name="NpcSearch" parameters="npc, obj" type="boolean">
+    exit = PickOneUnlockedExit (npc.parent)
+    oldroom = npc.parent
+    NpcMove(npc, exit.to)
+    return (obj.parent = npc.parent)
+  </function>
+
 
   <function name="NpcGet" parameters="npc, obj" type="boolean">
     obj.parent = npc
@@ -101,35 +242,16 @@
     return (true)
   </function>
 
-  <function name="NpcWait" parameters="npc, obj" type="boolean">
-    if (obj = game.pov or HasScript(obj, "takeaturn")) {
-      return (npc.parent = obj.parent)
-    }
-    else if (HasBoolean(obj, "locked")) {
-      return (not obj.locked)
-    }
-    else {
-      return (npc = obj.parent)
-    }
-  </function>
-
   <function name="NpcGive" parameters="npc, obj" type="boolean">
     obj.parent = game.pov
-    PrintIfHere (npc.parent, GetDisplayName(npc) + " gives you the " + GetDisplayAlias(obj) + ".")
+    PrintIfHere (npc.parent, GetDisplayName(Member(npc)) + " gives you the " + GetDisplayAlias(obj) + ".")
     return (true)
-  </function>
-
-  <function name="NpcSearch" parameters="npc, obj" type="boolean">
-    exit = PickOneUnlockedExit (npc.parent)
-    oldroom = npc.parent
-    NpcMove(npc, exit.to)
-    return (obj.parent = npc.parent)
   </function>
 
   <function name="NpcLock" parameters="npc, obj" type="boolean">
     if (not obj.locked) {
       obj.locked = true
-      PrintIfHere (npc.parent, GetDisplayName(npc) + " locks the " + GetDisplayAlias(obj) + ".")
+      PrintIfHere (npc.parent, GetDisplayName(Member(npc)) + " locks the " + GetDisplayAlias(obj) + ".")
     }
     return (true)
   </function>
@@ -137,7 +259,7 @@
   <function name="NpcUnlock" parameters="npc, obj" type="boolean">
     if (obj.locked) {
       obj.locked = false
-      PrintIfHere (npc.parent, GetDisplayName(npc) + " unlocks the " + GetDisplayAlias(obj) + ".")
+      PrintIfHere (npc.parent, GetDisplayName(Member(npc)) + " unlocks the " + GetDisplayAlias(obj) + ".")
     }
     return (true)
   </function>
@@ -145,7 +267,7 @@
   <function name="NpcOpen" parameters="npc, obj" type="boolean">
     if (not obj.isopen) {
       obj.isopen = true
-      PrintIfHere (npc.parent, GetDisplayName(npc) + " opens the " + GetDisplayAlias(obj) + ".")
+      PrintIfHere (npc.parent, GetDisplayName(Member(npc)) + " opens the " + GetDisplayAlias(obj) + ".")
     }
     return (true)
   </function>
@@ -153,7 +275,7 @@
   <function name="NpcClose" parameters="npc, obj" type="boolean">
     if (obj.isopen) {
       obj.isopen = false
-      PrintIfHere (npc.parent, GetDisplayName(npc) + " closes the " + GetDisplayAlias(obj) + ".")
+      PrintIfHere (npc.parent, GetDisplayName(Member(npc)) + " closes the " + GetDisplayAlias(obj) + ".")
     }
     return (true)
   </function>
@@ -176,8 +298,16 @@
     return (true)
   </function>
 
+  <function name="NpcJoin" parameters="npc, obj" type="boolean">
+    return (NpcInclude(obj, npc))
+  </function>
+
   <function name="NpcPause" parameters="npc, obj" type="boolean">
     return (true)
+  </function>
+
+  <function name="NpcGoToParent" parameters="npc, obj" type="boolean">
+    return (NpcGoTo(npc, obj.parent))
   </function>
 
   <function name="NpcGoTo" parameters="npc, obj" type="boolean">
@@ -199,9 +329,54 @@
     }
     return (npc.deletefromlist)
   </function>
+  
+  
+  
+  <!--
+  These five are for groups only.
+  -->
+  <function name="NpcWaitFor" parameters="npc, obj" type="boolean">
+    if (not DoesInherit(npc, "GroupType")) error (npc.name + " is not a group!")
+    return (obj.group = npc)
+  </function>
 
+  <function name="NpcCount" parameters="npc, obj" type="boolean">
+    if (not DoesInherit(npc, "GroupType")) error (npc.name + " is not a group!")
+    return (ListCount(GroupMembers(npc)) = obj.count)
+  </function>
+
+  <function name="NpcInclude" parameters="npc, obj" type="boolean">
+    if (not DoesInherit(npc, "GroupType")) error (npc.name + " is not a group!")
+    obj.group = npc
+    do(npc, "resetalias")
+    npc.parent = obj.parent
+    return (true)
+  </function>
+
+  <function name="NpcExclude" parameters="npc, obj" type="boolean">
+    if (not DoesInherit(npc, "GroupType")) error (npc.name + " is not a group!")
+    obj.group = null
+    do(npc, "resetalias")
+    return (true)
+  </function>
+
+  <function name="NpcDisband" parameters="npc, obj" type="boolean">
+    if (not DoesInherit(npc, "GroupType")) error (npc.name + " is not a group!")
+    foreach (member, GroupMembers(npc)) {
+      member.group = null
+    }
+    do(npc, "resetalias")
+    return (true)
+  </function>
   
   
+  
+  
+
+
+  <!--
+  Path-finding.
+  -->
   
   <!-- Find a path from start to end using a set of exits and maxlength passed. -->
   <function name="PathLib_GetPathExt" parameters="start, end, exits, maxlength" type="objectlist">
@@ -285,7 +460,7 @@
     <control>
       <controltype>dropdowntypes</controltype>
       <caption>Type</caption>
-      <types>*=None; NpcType=NPC</types>
+      <types>*=None; NpcType=NPC; GroupType=Group</types>
       <width>150</width>
     </control>
     
@@ -301,66 +476,67 @@
     <control>
       <controltype>title</controltype>
       <caption>Available actions:</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
       <caption>Move: NPC will move directly to the indicated room</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
-      <caption>Get: NPC will pick up the indicated item (whether it is there or not)</caption>
+      <caption>GoTo: NPC will go to the specified location, one turn per room. Use GoToParent to have the NPC navigate to the same room as an item or another NPC.</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
-      <caption>Drop: NPC will drop the indicated item (whether carried or not)</caption>
+      <caption>Get/Drop/Give: NPC will pick up/drop/give to the player the indicated item (whether it is there or not)</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
-      <caption>Give: NPC will give the indicated item to the player (whether carried or not)</caption>
-    </control>
-      
-    <control>
-      <controltype>label</controltype>
-      <caption>Lock/Unlock/Open/Close: NPC will lock/unlock/open/close the indicated item (whether it is there or not)</caption>
-    </control>
-      
-    <control>
-      <controltype>label</controltype>
-      <caption>Wear/Remove: NPC will wear/remove the indicated item (whether it is there or not)</caption>
+      <caption>Lock/Unlock/Open/Close/Wear/Remove: NPC will lock/unlock/open/close/wear/remove the indicated item (whether it is there or not)</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
       <caption>Search: NPC will move via a random exit, and will continue to do so until in the same room as the indicated item</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
 
     <control>
       <controltype>label</controltype>
-      <caption>Wait: NPC will wait, and will continue to do so until the player is the same room if the indicated item is the player, or the indicated item is unlocked if it has a "locked" attribute, or until given the indicated item otherwise.</caption>
+      <caption>Wait: NPC will wait, and will continue to do so until the player or other NPC is the same room if the indicated item is the player or an NPC, or the indicated item is unlocked if it has a "locked" attribute, or until given the indicated item otherwise.</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
       <caption>Pause: NPC does nothing for one turn.</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
-      <caption>Script: Runs the NPC's "npcscript" script. If this sets the NPC's "deletefromlist" attribute to false, then this will rin again next turn.</caption>
+      <caption>Script: Runs the NPC's "npcscript" script. If this sets the NPC's "deletefromlist" attribute to false, then this will run again next turn.</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>label</controltype>
-      <caption>You can add your own verbs; add a new function called "Npc", followed by the verb, have it return a Boolean, and take two attributes, the NPc and the item.</caption>
+      <caption>You can add your own verbs; add a new function called "Npc", followed by the verb, have it return a Boolean, and take two attributes, the NPC and the item.</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
       <controltype>title</controltype>
       <caption>Script</caption>
+      <mustinherit>NpcType</mustinherit>
     </control>
       
     <control>
@@ -371,6 +547,12 @@
       <mustinherit>NpcType</mustinherit>
     </control>
     
+    <control>
+      <controltype>label</controltype>
+      <caption>Set this.deletefromlist to false to have the script run again next turn.</caption>
+      <mustinherit>NpcType</mustinherit>
+    </control>
+      
   </tab>
   
   
