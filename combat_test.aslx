@@ -1,13 +1,9 @@
-<!--Saved by Quest 5.6.6108.15891-->
+<!--Saved by Quest 5.7.6606.27193-->
 <asl version="550">
   <include ref="English.aslx" />
   <include ref="Core.aslx" />
-  <include ref="../lib/ShopLib.aslx" />
-  <include ref="../lib/ClothingLib.aslx" />
   <include ref="CombatLib.aslx" />
-  <include ref="ObjectLib.xml" />
-  <include ref="Stuff.xml" />
-  <game name="combat_test">
+  <game name="Combat Demo">
     <gameid>209c20d6-6430-4a03-9d96-13b02db198b7</gameid>
     <version>1.1</version>
     <firstpublished>2016</firstpublished>
@@ -117,23 +113,15 @@
                 $("button[title='Close']")[0].style.display = 'none';
             });
        </script>
-                                                                        ]]></ccdialogue>
+                                                                            ]]></ccdialogue>
     <showpanes type="boolean">false</showpanes>
     <showcommandbar type="boolean">false</showcommandbar>
+    <description>This is a simple demo that has 20 spells, 5 talismans, 5 rings, 4 scrolls, 45 weapons, and over 100 monsters.</description>
     <start type="script">
       CombatInitialise
       JS.addText (game.ccdialogue)
-      count = 0
-      foreach (o, AllObjects()) {
-        if (DoesInherit(o, "weapon")) {
-          if (not DoesInherit(o, "monster_attack")) {
-            count = count + 1
-          }
-        }
-      }
-      msg (count)
     </start>
-    <description>This is a simple demo that has 20 spells, 5 talismans, 5 rings, 4 scrolls, 45 weapons, and over 100 monsters. You will need to </description>
+    <author>The Pixie</author>
   </game>
   <object name="start_room">
     <inherit name="editor_room" />
@@ -153,7 +141,7 @@
     <exit alias="north" to="spells">
       <inherit name="northdirection" />
     </exit>
-    <exit alias="northeast" to="undead">
+    <exit alias="northeast" to="undeads">
       <inherit name="northeastdirection" />
     </exit>
     <exit alias="east" to="demons">
@@ -443,6 +431,7 @@
       <cannothold />
       <lastsfor type="int">7</lastsfor>
       <status>Wolf-form</status>
+      <alias>Wolf-form</alias>
       <specialattack type="object">wolf attack</specialattack>
       <spelleffect type="script">
         player.gagstring = "You cannot talk - you are a wolf!"
@@ -456,11 +445,11 @@
         player.magicbonus = player.magicbonus + 10
         msg ("You feel like your body is being turned inside out...")
       </terminate>
-      <alias>Wolf-form</alias>
     </object>
     <object name="spell_charm">
       <inherit name="editor_object" />
       <inherit name="nonattackspell" />
+      <alias>Charm</alias>
       <spelleffect type="script">
         l = NewObjectList()
         foreach (obj, ScopeVisibleNotHeld ()) {
@@ -481,7 +470,6 @@
           do (o, "settodefend")
         }
       </spelleffect>
-      <alias>Charm</alias>
     </object>
     <exit alias="south" to="start_room">
       <inherit name="southdirection" />
@@ -1180,7 +1168,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning2">
           <inherit name="editor_object" />
@@ -1193,7 +1180,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff2">
           <inherit name="editor_object" />
@@ -1204,7 +1190,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken2">
           <inherit name="editor_object" />
@@ -1217,7 +1202,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -1306,7 +1290,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning4">
           <inherit name="editor_object" />
@@ -1319,7 +1302,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff4">
           <inherit name="editor_object" />
@@ -1330,7 +1312,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken4">
           <inherit name="editor_object" />
@@ -1343,7 +1324,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -1365,7 +1345,6 @@
           <damagebonus type="int">0</damagebonus>
           <canberusted type="boolean">false</canberusted>
           <canbevenomed type="boolean">false</canbevenomed>
-          <original type="object">crude_club</original>
         </object>
       </object>
       <object name="Goblin shaman">
@@ -1447,7 +1426,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning6">
           <inherit name="editor_object" />
@@ -1460,7 +1438,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff6">
           <inherit name="editor_object" />
@@ -1471,7 +1448,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken6">
           <inherit name="editor_object" />
@@ -1484,7 +1460,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -1499,7 +1474,6 @@
           <alias>Healing potion</alias>
           <look>A small vial, containing a green liquid that is distinctive of healing potions. Drinking it will restore you to full health instantly.</look>
           <scenery />
-          <original type="object">masterhealingpotion</original>
         </object>
       </object>
       <object name="Dire goblin shaman">
@@ -1581,7 +1555,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning8">
           <inherit name="editor_object" />
@@ -1594,7 +1567,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff8">
           <inherit name="editor_object" />
@@ -1605,7 +1577,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken8">
           <inherit name="editor_object" />
@@ -1618,7 +1589,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -1707,7 +1677,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning10">
           <inherit name="editor_object" />
@@ -1720,7 +1689,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff10">
           <inherit name="editor_object" />
@@ -1731,7 +1699,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken10">
           <inherit name="editor_object" />
@@ -1744,7 +1711,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -1833,7 +1799,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning12">
           <inherit name="editor_object" />
@@ -1846,7 +1811,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff12">
           <inherit name="editor_object" />
@@ -1857,7 +1821,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken12">
           <inherit name="editor_object" />
@@ -1870,7 +1833,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -1959,7 +1921,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning14">
           <inherit name="editor_object" />
@@ -1972,7 +1933,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff14">
           <inherit name="editor_object" />
@@ -1983,7 +1943,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken14">
           <inherit name="editor_object" />
@@ -1996,7 +1955,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2085,7 +2043,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning16">
           <inherit name="editor_object" />
@@ -2098,7 +2055,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff16">
           <inherit name="editor_object" />
@@ -2109,7 +2065,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken16">
           <inherit name="editor_object" />
@@ -2122,7 +2077,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2211,7 +2165,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning18">
           <inherit name="editor_object" />
@@ -2224,7 +2177,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff18">
           <inherit name="editor_object" />
@@ -2235,7 +2187,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken18">
           <inherit name="editor_object" />
@@ -2248,7 +2199,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2337,7 +2287,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning20">
           <inherit name="editor_object" />
@@ -2350,7 +2299,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff20">
           <inherit name="editor_object" />
@@ -2361,7 +2309,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken20">
           <inherit name="editor_object" />
@@ -2374,7 +2321,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2463,7 +2409,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning22">
           <inherit name="editor_object" />
@@ -2476,7 +2421,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff22">
           <inherit name="editor_object" />
@@ -2487,7 +2431,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken22">
           <inherit name="editor_object" />
@@ -2500,7 +2443,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2589,7 +2531,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning24">
           <inherit name="editor_object" />
@@ -2602,7 +2543,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff24">
           <inherit name="editor_object" />
@@ -2613,7 +2553,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken24">
           <inherit name="editor_object" />
@@ -2626,7 +2565,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2715,7 +2653,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning26">
           <inherit name="editor_object" />
@@ -2728,7 +2665,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff26">
           <inherit name="editor_object" />
@@ -2739,7 +2675,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken26">
           <inherit name="editor_object" />
@@ -2752,7 +2687,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2841,7 +2775,6 @@
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning28">
           <inherit name="editor_object" />
@@ -2854,7 +2787,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff28">
           <inherit name="editor_object" />
@@ -2865,7 +2797,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken28">
           <inherit name="editor_object" />
@@ -2878,7 +2809,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -2967,7 +2897,6 @@
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">7</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">kobold_shaman_ice_blast</original>
         </object>
         <object name="kobold_shaman_lightning30">
           <inherit name="editor_object" />
@@ -2980,7 +2909,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <element type="object">storm</element>
-          <original type="object">kobold_shaman_lightning</original>
         </object>
         <object name="kobold_shaman_staff30">
           <inherit name="editor_object" />
@@ -2991,7 +2919,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">kobold_shaman_staff</original>
         </object>
         <object name="kobold_shaman_weaken30">
           <inherit name="editor_object" />
@@ -3004,7 +2931,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">kobold_shaman_weaken</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.damagebonus - 5
             this.parent.resetattribute = "damagebonus"
@@ -3020,14 +2946,13 @@
           <price type="int">26</price>
           <desc>This dagger has a blade that curves one way, then the other. It looks fancy, but would not be great in battle; its purpose was probably ceremonial. Probably worth quite a bit, though.</desc>
           <destroyonsale />
-          <original type="object">curved_dagger</original>
         </object>
       </object>
       <exit alias="southeast" to="start_room">
         <inherit name="southeastdirection" />
       </exit>
     </object>
-    <object name="undead">
+    <object name="undeads">
       <inherit name="editor_room" />
       <description>This room contains 33 different undead. Minor apparitions to wraith lords are non-corporeal, levels 1 to 15, whilst animated corpse to greater bonelord are corporeal, levels 1 to 15. Plus electric skeleton, fire zombie and lich.</description>
       <object name="Minor apparition">
@@ -3092,7 +3017,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack2">
           <inherit name="editor_object" />
@@ -3105,7 +3029,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek2">
           <inherit name="editor_object" />
@@ -3118,7 +3041,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3188,7 +3110,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack4">
           <inherit name="editor_object" />
@@ -3201,7 +3122,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek4">
           <inherit name="editor_object" />
@@ -3214,7 +3134,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3284,7 +3203,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack6">
           <inherit name="editor_object" />
@@ -3297,7 +3215,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek6">
           <inherit name="editor_object" />
@@ -3310,7 +3227,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3380,7 +3296,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack8">
           <inherit name="editor_object" />
@@ -3393,7 +3308,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek8">
           <inherit name="editor_object" />
@@ -3406,7 +3320,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3476,7 +3389,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack10">
           <inherit name="editor_object" />
@@ -3489,7 +3401,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek10">
           <inherit name="editor_object" />
@@ -3502,7 +3413,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3572,7 +3482,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack12">
           <inherit name="editor_object" />
@@ -3585,7 +3494,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek12">
           <inherit name="editor_object" />
@@ -3598,7 +3506,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3668,7 +3575,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack14">
           <inherit name="editor_object" />
@@ -3681,7 +3587,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek14">
           <inherit name="editor_object" />
@@ -3694,7 +3599,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3764,7 +3668,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack16">
           <inherit name="editor_object" />
@@ -3777,7 +3680,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek16">
           <inherit name="editor_object" />
@@ -3790,7 +3692,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3860,7 +3761,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack18">
           <inherit name="editor_object" />
@@ -3873,7 +3773,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek18">
           <inherit name="editor_object" />
@@ -3886,7 +3785,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -3956,7 +3854,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack20">
           <inherit name="editor_object" />
@@ -3969,7 +3866,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek20">
           <inherit name="editor_object" />
@@ -3982,7 +3878,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -4052,7 +3947,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack22">
           <inherit name="editor_object" />
@@ -4065,7 +3959,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek22">
           <inherit name="editor_object" />
@@ -4078,7 +3971,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -4148,7 +4040,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack24">
           <inherit name="editor_object" />
@@ -4161,7 +4052,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek24">
           <inherit name="editor_object" />
@@ -4174,7 +4064,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -4244,7 +4133,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack26">
           <inherit name="editor_object" />
@@ -4257,7 +4145,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek26">
           <inherit name="editor_object" />
@@ -4270,7 +4157,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -4340,7 +4226,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack28">
           <inherit name="editor_object" />
@@ -4353,7 +4238,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek28">
           <inherit name="editor_object" />
@@ -4366,7 +4250,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -4436,7 +4319,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">7</damagedicesides>
-          <original type="object">ghost_attack</original>
         </object>
         <object name="wraith_attack30">
           <inherit name="editor_object" />
@@ -4449,7 +4331,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">7</damagedicesides>
-          <original type="object">wraith_attack</original>
         </object>
         <object name="banshee shriek30">
           <inherit name="editor_object" />
@@ -4462,7 +4343,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">7</damagedicesides>
-          <original type="object">banshee shriek</original>
           <onsuccessfulattack type="script">
             msg ("The % has drained your mind!")
             player.magiccurse = player.magiccurse + 2
@@ -5088,7 +4968,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning2">
           <inherit name="editor_object" />
@@ -5101,7 +4980,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw2">
           <inherit name="editor_object" />
@@ -5112,7 +4990,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle2">
           <inherit name="editor_object" />
@@ -5125,7 +5002,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5212,7 +5088,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning4">
           <inherit name="editor_object" />
@@ -5225,7 +5100,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw4">
           <inherit name="editor_object" />
@@ -5236,7 +5110,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle4">
           <inherit name="editor_object" />
@@ -5249,7 +5122,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5336,7 +5208,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning6">
           <inherit name="editor_object" />
@@ -5349,7 +5220,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw6">
           <inherit name="editor_object" />
@@ -5360,7 +5230,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle6">
           <inherit name="editor_object" />
@@ -5373,7 +5242,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5460,7 +5328,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning8">
           <inherit name="editor_object" />
@@ -5473,7 +5340,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw8">
           <inherit name="editor_object" />
@@ -5484,7 +5350,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle8">
           <inherit name="editor_object" />
@@ -5497,7 +5362,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5584,7 +5448,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning10">
           <inherit name="editor_object" />
@@ -5597,7 +5460,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw10">
           <inherit name="editor_object" />
@@ -5608,7 +5470,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle10">
           <inherit name="editor_object" />
@@ -5621,7 +5482,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5708,7 +5568,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning12">
           <inherit name="editor_object" />
@@ -5721,7 +5580,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw12">
           <inherit name="editor_object" />
@@ -5732,7 +5590,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle12">
           <inherit name="editor_object" />
@@ -5745,7 +5602,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5832,7 +5688,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning14">
           <inherit name="editor_object" />
@@ -5845,7 +5700,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw14">
           <inherit name="editor_object" />
@@ -5856,7 +5710,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle14">
           <inherit name="editor_object" />
@@ -5869,7 +5722,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -5956,7 +5808,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning16">
           <inherit name="editor_object" />
@@ -5969,7 +5820,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw16">
           <inherit name="editor_object" />
@@ -5980,7 +5830,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle16">
           <inherit name="editor_object" />
@@ -5993,7 +5842,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6080,7 +5928,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning18">
           <inherit name="editor_object" />
@@ -6093,7 +5940,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw18">
           <inherit name="editor_object" />
@@ -6104,7 +5950,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle18">
           <inherit name="editor_object" />
@@ -6117,7 +5962,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6204,7 +6048,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning20">
           <inherit name="editor_object" />
@@ -6217,7 +6060,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw20">
           <inherit name="editor_object" />
@@ -6228,7 +6070,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle20">
           <inherit name="editor_object" />
@@ -6241,7 +6082,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6328,7 +6168,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning22">
           <inherit name="editor_object" />
@@ -6341,7 +6180,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw22">
           <inherit name="editor_object" />
@@ -6352,7 +6190,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle22">
           <inherit name="editor_object" />
@@ -6365,7 +6202,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6452,7 +6288,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning24">
           <inherit name="editor_object" />
@@ -6465,7 +6300,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw24">
           <inherit name="editor_object" />
@@ -6476,7 +6310,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle24">
           <inherit name="editor_object" />
@@ -6489,7 +6322,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6576,7 +6408,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning26">
           <inherit name="editor_object" />
@@ -6589,7 +6420,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw26">
           <inherit name="editor_object" />
@@ -6600,7 +6430,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle26">
           <inherit name="editor_object" />
@@ -6613,7 +6442,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6629,7 +6457,6 @@
           <look>A poor-quality sapphire.</look>
           <price type="int">46</price>
           <destroyonsale />
-          <original type="object">gem1</original>
         </object>
       </object>
       <object name="Demon prince">
@@ -6709,7 +6536,6 @@
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning28">
           <inherit name="editor_object" />
@@ -6722,7 +6548,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw28">
           <inherit name="editor_object" />
@@ -6733,7 +6558,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle28">
           <inherit name="editor_object" />
@@ -6746,7 +6570,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6833,7 +6656,6 @@
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">7</damagedicesides>
           <element type="object">frost</element>
-          <original type="object">fiend_fire_blast</original>
         </object>
         <object name="fiend_lightning30">
           <inherit name="editor_object" />
@@ -6846,7 +6668,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <element type="object">storm</element>
-          <original type="object">fiend_lightning</original>
         </object>
         <object name="fiend_claw30">
           <inherit name="editor_object" />
@@ -6857,7 +6678,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">fiend_claw</original>
         </object>
         <object name="fiend_befuddle30">
           <inherit name="editor_object" />
@@ -6870,7 +6690,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">fiend_befuddle</original>
           <attackplayer type="script"><![CDATA[
             player.damagebonus = player.magicbonus - 2
             this.parent.resetattribute = "magicbonus"
@@ -6943,7 +6762,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning2">
           <inherit name="editor_object" />
@@ -6956,7 +6774,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle2">
           <inherit name="editor_object" />
@@ -6967,7 +6784,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Grim shambler">
@@ -7033,7 +6849,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning4">
           <inherit name="editor_object" />
@@ -7046,7 +6861,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle4">
           <inherit name="editor_object" />
@@ -7057,7 +6871,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Creeping fright">
@@ -7123,7 +6936,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning6">
           <inherit name="editor_object" />
@@ -7136,7 +6948,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle6">
           <inherit name="editor_object" />
@@ -7147,7 +6958,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Spawn of hab yogsoth">
@@ -7214,7 +7024,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning8">
           <inherit name="editor_object" />
@@ -7227,7 +7036,6 @@
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle8">
           <inherit name="editor_object" />
@@ -7238,7 +7046,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Dire creeper">
@@ -7304,7 +7111,6 @@
           <damagebonus type="int">0</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning10">
           <inherit name="editor_object" />
@@ -7317,7 +7123,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle10">
           <inherit name="editor_object" />
@@ -7328,7 +7133,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Night horror">
@@ -7394,7 +7198,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">4</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning12">
           <inherit name="editor_object" />
@@ -7407,7 +7210,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle12">
           <inherit name="editor_object" />
@@ -7418,7 +7220,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Chaos worm">
@@ -7484,7 +7285,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning14">
           <inherit name="editor_object" />
@@ -7497,7 +7297,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle14">
           <inherit name="editor_object" />
@@ -7508,7 +7307,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="horror8">
@@ -7575,7 +7373,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning16">
           <inherit name="editor_object" />
@@ -7588,7 +7385,6 @@
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle16">
           <inherit name="editor_object" />
@@ -7599,7 +7395,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Maloeg">
@@ -7665,7 +7460,6 @@
           <damagebonus type="int">1</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning18">
           <inherit name="editor_object" />
@@ -7678,7 +7472,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle18">
           <inherit name="editor_object" />
@@ -7689,7 +7482,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Greater maloeg">
@@ -7755,7 +7547,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">5</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning20">
           <inherit name="editor_object" />
@@ -7768,7 +7559,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle20">
           <inherit name="editor_object" />
@@ -7779,7 +7569,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Loathsome fright">
@@ -7845,7 +7634,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning22">
           <inherit name="editor_object" />
@@ -7858,7 +7646,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle22">
           <inherit name="editor_object" />
@@ -7869,7 +7656,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Night grim">
@@ -7935,7 +7721,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning24">
           <inherit name="editor_object" />
@@ -7948,7 +7733,6 @@
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle24">
           <inherit name="editor_object" />
@@ -7959,7 +7743,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Arch maloeg">
@@ -8026,7 +7809,6 @@
           <damagebonus type="int">2</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning26">
           <inherit name="editor_object" />
@@ -8039,7 +7821,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle26">
           <inherit name="editor_object" />
@@ -8050,7 +7831,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Ethereal horror">
@@ -8116,7 +7896,6 @@
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">6</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning28">
           <inherit name="editor_object" />
@@ -8129,7 +7908,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle28">
           <inherit name="editor_object" />
@@ -8140,7 +7918,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <object name="Ascended maloeg">
@@ -8206,7 +7983,6 @@
           <damagebonus type="int">3</damagebonus>
           <damagedicesides type="int">7</damagedicesides>
           <element type="object">necrotic</element>
-          <original type="object">horror_death_blast</original>
         </object>
         <object name="horror_lightning30">
           <inherit name="editor_object" />
@@ -8219,7 +7995,6 @@
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
           <element type="object">storm</element>
-          <original type="object">horror_lightning</original>
         </object>
         <object name="horror_tentacle30">
           <inherit name="editor_object" />
@@ -8230,7 +8005,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">horror_tentacle</original>
         </object>
       </object>
       <exit alias="west" to="start_room">
@@ -8309,7 +8083,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">0</attackbonus>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw2">
           <inherit name="editor_object" />
@@ -8323,7 +8096,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath2">
           <inherit name="editor_object" />
@@ -8338,7 +8110,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagebonus type="int">0</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Vicious serpent">
@@ -8410,7 +8181,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">0</attackbonus>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw4">
           <inherit name="editor_object" />
@@ -8424,7 +8194,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath4">
           <inherit name="editor_object" />
@@ -8439,7 +8208,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagebonus type="int">0</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Cave wyrm">
@@ -8511,7 +8279,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">0</attackbonus>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw6">
           <inherit name="editor_object" />
@@ -8525,7 +8292,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath6">
           <inherit name="editor_object" />
@@ -8540,7 +8306,6 @@
           <attackbonus type="int">0</attackbonus>
           <damagebonus type="int">0</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
         <object name="ornate_goblet6">
           <inherit name="editor_object" />
@@ -8549,7 +8314,6 @@
           <price type="int">3</price>
           <look>Rather crudely crafted with athletes etched on it. Badly dented and not worth much.</look>
           <destroyonsale />
-          <original type="object">ornate_goblet4</original>
         </object>
       </object>
       <object name="Greater wyrm">
@@ -8621,7 +8385,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw8">
           <inherit name="editor_object" />
@@ -8635,7 +8398,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">1</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath8">
           <inherit name="editor_object" />
@@ -8650,7 +8412,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">0</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
         <object name="ring4">
           <inherit name="editor_object" />
@@ -8661,7 +8422,6 @@
           <look>A simple mithril band.</look>
           <notindescription type="boolean">false</notindescription>
           <destroyonsale />
-          <original type="object">ring0</original>
         </object>
       </object>
       <object name="Cockatrice">
@@ -8733,7 +8493,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw10">
           <inherit name="editor_object" />
@@ -8747,7 +8506,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">0</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath10">
           <inherit name="editor_object" />
@@ -8762,7 +8520,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">0</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Great serpent">
@@ -8834,7 +8591,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw12">
           <inherit name="editor_object" />
@@ -8848,7 +8604,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath12">
           <inherit name="editor_object" />
@@ -8863,7 +8618,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">1</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
         <object name="mace1">
           <inherit name="weapon" />
@@ -8876,7 +8630,6 @@
           <damagedicesides type="int">10</damagedicesides>
           <damagebonus type="int">2</damagebonus>
           <canbevenomed type="boolean">false</canbevenomed>
-          <original type="object">mace</original>
         </object>
       </object>
       <object name="Basilisk">
@@ -8948,7 +8701,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw14">
           <inherit name="editor_object" />
@@ -8962,7 +8714,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath14">
           <inherit name="editor_object" />
@@ -8977,7 +8728,6 @@
           <attackbonus type="int">1</attackbonus>
           <damagebonus type="int">1</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Lesser drake">
@@ -9049,7 +8799,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw16">
           <inherit name="editor_object" />
@@ -9063,7 +8812,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">2</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath16">
           <inherit name="editor_object" />
@@ -9078,7 +8826,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">1</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Greater drake">
@@ -9150,7 +8897,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw18">
           <inherit name="editor_object" />
@@ -9164,7 +8910,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">1</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath18">
           <inherit name="editor_object" />
@@ -9179,7 +8924,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">1</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Young wyvern">
@@ -9251,7 +8995,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw20">
           <inherit name="editor_object" />
@@ -9265,7 +9008,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath20">
           <inherit name="editor_object" />
@@ -9280,7 +9022,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">2</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Mature wyvern">
@@ -9352,7 +9093,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw22">
           <inherit name="editor_object" />
@@ -9366,7 +9106,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath22">
           <inherit name="editor_object" />
@@ -9381,7 +9120,6 @@
           <attackbonus type="int">2</attackbonus>
           <damagebonus type="int">2</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Young dragon">
@@ -9453,7 +9191,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw24">
           <inherit name="editor_object" />
@@ -9467,7 +9204,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">3</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath24">
           <inherit name="editor_object" />
@@ -9482,7 +9218,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">2</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Ancient wyvern">
@@ -9554,7 +9289,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw26">
           <inherit name="editor_object" />
@@ -9568,7 +9302,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">2</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath26">
           <inherit name="editor_object" />
@@ -9583,7 +9316,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">2</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Mature dragon">
@@ -9655,7 +9387,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw28">
           <inherit name="editor_object" />
@@ -9669,7 +9400,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath28">
           <inherit name="editor_object" />
@@ -9684,7 +9414,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">3</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <object name="Ancient dragon">
@@ -9756,7 +9485,6 @@
           <canberusted type="boolean">false</canberusted>
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">dragon_bite</original>
         </object>
         <object name="dragon_claw30">
           <inherit name="editor_object" />
@@ -9770,7 +9498,6 @@
           <level type="int">4</level>
           <damagedicenumber type="int">4</damagedicenumber>
           <damagebonus type="int">3</damagebonus>
-          <original type="object">dragon_claw</original>
         </object>
         <object name="dragon_breath30">
           <inherit name="editor_object" />
@@ -9785,7 +9512,6 @@
           <attackbonus type="int">3</attackbonus>
           <damagebonus type="int">3</damagebonus>
           <element type="object">fire</element>
-          <original type="object">dragon_breath</original>
         </object>
       </object>
       <exit alias="north" to="start_room">
