@@ -189,6 +189,7 @@
   Sets the mark up for buying goods across the world to be their price attribute.
   -->
   <function name="BuyingPrice" parameters="obj" type="int"><![CDATA[
+    if (not HasInt(obj, "price")) error ("No price for " + obj.name)
     return (obj.price)
   ]]></function>
 
@@ -196,6 +197,7 @@
   Sets the mark up for selling goods across the world to be their price attribute.
   -->
   <function name="SellingPrice" parameters="obj" type="int"><![CDATA[
+    if (not HasInt(obj, "price")) error ("No price for " + obj.name)
     return (obj.price)
   ]]></function>
 
