@@ -113,7 +113,8 @@
 
   <function name="InitInv2" parameters="label">
     //Log ("in InitInv2")
-    OutputTextNoBr(Replace(inv2_object.javascriptstuff, "####", label))
+    //OutputTextNoBr(Replace(inv2_object.javascriptstuff, "####", label))
+    JS.addScript(Replace(inv2_object.javascriptstuff, "####", label))
   </function>
   
   
