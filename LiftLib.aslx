@@ -7,10 +7,10 @@
 
 
   <!--
-  LiftLib v2.0
+  LiftLib v2.1
   
   Quest version: 5.6
-  Written by: The Pixie, 2011-2016
+  Written by: The Pixie, 2011-2018
 
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/Lift-Library
@@ -19,7 +19,7 @@
 
 
 
-  <verb>
+  <verb name="press">
     <property>press</property>
     <pattern>press;push</pattern>
     <defaultexpression>"You can't press " + object.article + "."</defaultexpression>
@@ -37,7 +37,6 @@
     <leavingmsg type="string"></leavingmsg>
     <samefloor>Nothing happens. Perhaps because you are already on ###.</samefloor>
     <onexit type="script">
-      if (not this.leavingmsg = "") P (this.leavingmsg)
       LeavingTheLift
     </onexit>
   </type>
@@ -54,7 +53,7 @@
     </press>
     <move type="script">
       // Invoke this to have the lift move to this button's destination
-      // without any text appearing
+      // without any text appearing. The Arrival function is not called
       _PressButton(this, true)
     </move>
   </type>
@@ -86,9 +85,11 @@
         if (o.destination = current) current_button = o
       }
       if (exit.to = button.destination) {
+        moved = false
         s = button.parent.samefloor
       }
       else {
+        moved = true
         exit.to = button.destination
         if (button.parent.current_floor > button.floor) {
           s = button.parent.goingdown
@@ -107,33 +108,39 @@
         }
         button.parent.usage_count = button.parent.usage_count + 1
       }
+      // prepend the button pressing message
+      s = button.pressmsg + " " + s
+      // Swap ### for the floor name
+      if (HasString(button, "floorname")) {
+        s = Replace (s, "###", ToString (button.floorname))
+      }
+      else {
+        s = Replace (s, "###", "floor " + button.floor)
+      }
       if (not silently) {
-        // prepend the button pressing message
-        s = button.pressmsg + " " + s
-
-        // Swap ### for the floor name
-        if (HasString(button, "floorname")) {
-          P (Replace (s, "###", ToString (button.floorname)))
-        }
-        else {
-          P (Replace (s, "###", "floor " + button.floor))
-        }
+        Arrival(button, s, notmoved)
       }
 	</function>
 
+  
+  
 
 
   <!--
-  This gets called only when the action is successful; for text that is part of
-  the narrative. You can override this in your own code to flag that a command was successful
-  or to display narrative text differently to meta text.
+  This is called when the player presses a button (but not
+  when the lift is moved another time).
+  You can override this to have it print in a fancy way, or to have it do something when
+  the lift moves.
   -->
-  <function name="P" parameters="s">
+  <function name="Arrival" parameters="button, s, moved">
     msg(s)
 	</function>
 
 
   <function name="LeavingTheLift">
+    if (not this.leavingmsg = "") {
+      msg (this.leavingmsg)
+    }
 	</function>
 
 
