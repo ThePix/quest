@@ -7,7 +7,7 @@
 
 
   <!--
-  LiftLib v2.1
+  LiftLib v2.2
   
   Quest version: 5.6
   Written by: The Pixie, 2011-2018
@@ -49,7 +49,12 @@
     <floor type="int">1</floor>
     <pressmsg>You press the button.</pressmsg>
     <press type="script">
-      _PressButton(this, false)
+      if (HasString(this, "lockedmessage")) {
+        msg (this.lockedmessage)
+      }
+      else {
+        _PressButton(this, false)
+      }
     </press>
     <move type="script">
       // Invoke this to have the lift move to this button's destination
@@ -118,7 +123,7 @@
         s = Replace (s, "###", "floor " + button.floor)
       }
       if (not silently) {
-        Arrival(button, s, notmoved)
+        Arrival(button, s, moved)
       }
 	</function>
 
@@ -271,6 +276,13 @@
       <controltype>textbox</controltype>
       <caption>Floor name</caption>
       <attribute>floorname</attribute>
+      <mustinherit>liftbutton</mustinherit>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Locked message</caption>
+      <attribute>lockedmessage</attribute>
       <mustinherit>liftbutton</mustinherit>
     </control>
 
