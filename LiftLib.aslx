@@ -7,10 +7,11 @@
 
 
   <!--
-  LiftLib v2.2
+  LiftLib v2.3
   
   Quest version: 5.6
   Written by: The Pixie, 2011-2018
+  With thanks to KV
 
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/Lift-Library
@@ -36,8 +37,23 @@
     <goingdown>The lift descends to ###.</goingdown>
     <leavingmsg type="string"></leavingmsg>
     <samefloor>Nothing happens. Perhaps because you are already on ###.</samefloor>
+    <attr name="changedcurrent_floor" type="script">
+      oldvalue = this.last_floor
+      currentvalue = this.current_floor
+      change = oldvalue - currentvalue
+      if (game.gridmap) {
+	      thisdict = DictionaryItem(player.grid_coordinates, this.name)
+        if (Grid_GetRoomBooleanForPlayer(game.pov, this, "grid_isdrawn")) {
+          dictionary remove (thisdict, "z")
+          dictionary add (thisdict, "z", currentvalue*1.0+change)
+          Grid_CalculateMapCoordinates (this, game.pov)
+          Grid_Redraw  //THIS CLEARS ANY GRID FILLS!
+          Grid_DrawPlayerInRoom (game.pov.parent)
+        }
+      }
+    </attr>
     <onexit type="script">
-      LeavingTheLift
+      LeavingTheLift(this)
     </onexit>
   </type>
   
@@ -68,6 +84,7 @@
     <script type="script">
       exit = ObjectListItem (ScopeExitsForRoom (this.to), 0)
       exit.to = game.pov.parent
+      game.pov.parent.last_floor = game.pov.parent.parent
       MoveObject (game.pov, this.to)
       //msg("about to check children of " + this.to.name)
       foreach (obj, GetDirectChildren (this.to)) {
@@ -95,6 +112,7 @@
       }
       else {
         moved = true
+        button.parent.last_floor = button.parent.current_floor
         exit.to = button.destination
         if (button.parent.current_floor > button.floor) {
           s = button.parent.goingdown
@@ -142,9 +160,9 @@
 	</function>
 
 
-  <function name="LeavingTheLift">
-    if (not this.leavingmsg = "") {
-      msg (this.leavingmsg)
+  <function name="LeavingTheLift" parameters="lift">
+    if (not lift.leavingmsg = "") {
+      msg (lift.leavingmsg)
     }
 	</function>
 
