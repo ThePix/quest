@@ -12,7 +12,6 @@
   Documentation here:
   http://docs.textadventures.co.uk/quest/independent_npcs.html
   
-  
   Quest version: 5.7
   Written by: The Pixie, 2017
   
@@ -48,6 +47,13 @@
   NPC entering message indicates the direction, and uses functions not templates
   New Follow option (and NpcFollow function). You can use the "followidle"
   attribute to have the NPC do something whilst the player is not moving
+  
+  As of version 1.5
+  This is now useable with ClockLib 3.1 (but not 3.0 - check which you have)
+  Note that you MUST use SetTime to set the initial time, as this will disable the
+  standard NpcLib turnscript.
+  You also need to use PrintIfHere in any NPC action or event that you want WAIT to stop for
+  (or set game_clock.event = true).
   -->
 
   
@@ -87,6 +93,7 @@
     <script>
       foreach (o, AllObjects()) {
         if (HasScript(o, "takeaturn")) {
+          msg("Doing " + o.name)
           if (GetBoolean(o, "paused")) {
             o.paused = false
           }
@@ -97,7 +104,6 @@
       }
     </script>
   </turnscript>
-
 
   
   
@@ -112,6 +118,9 @@
   <function name="PrintIfHere" parameters="room, s">
     if (game.pov.parent = room) {
       msg (s)
+      if (not GetObject("game_clock") = null) {
+        game_clock.event = true
+      }
     }
   </function>
   

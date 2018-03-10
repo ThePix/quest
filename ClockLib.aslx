@@ -7,16 +7,21 @@
 
 
   <!--
-  ClockLib v3.2
-  
-  Version 3.1 adds functionality for displaying dates.
-  Version 3.2 displays noon as "12 noon" and midnight as "1 midnight"
+  ClockLib v3.1
   
   Quest version: 5.6
-  Written by: The Pixie, 2011-2017
+  Written by: The Pixie, 2011-2016
 
+  You must give the game object a Boolean attribute called "notarealturn" for the events to fire
+  and time to pass.
+  
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/Clock-Library
+
+  As of version 3.1
+  This is now useable with NpcLib 1.6 (but not 1.5 - check which you have)
+  Note that you MUST use SetTime to set the initial time, as this will disable the
+  standard NpcLib turnscript.
   -->
 
 
@@ -34,7 +39,6 @@
     <changedtime type="script">
       JS.eval("$('#clock').html('" + TimeAsString() + "');")
     </changedtime>
-    <startyear type="int">2000</startyear>
   </object>
   
   <command name="clock">
@@ -61,7 +65,7 @@
     </script>
   </command>
   
-  <turnscript>
+  <turnscript name="ClockLibTurnScript">
     <enabled type="boolean">true</enabled>
     <script>
       if (HasBoolean(game, "notarealturn")) {
@@ -80,12 +84,6 @@
   </turnscript>
 
   <function name="TimeAsString" type="string"><![CDATA[
-    if (game_clock.minutes = 0 and game_clock.hours24 = 0) {
-      return (" 12 midnight")
-    }
-    if (game_clock.minutes = 0 and game_clock.hours24 = 12) {
-      return (" 12 noon")
-    }
     hours = game_clock.hours24 % 12
     if (hours = 0) {
       hours = 12
@@ -123,26 +121,20 @@
         do(o, "look")
       }
       else if (game_clock.countdown < 0 and HasAttribute(game_clock, "nextstep")) {
-        if (game_clock.testing) msg("{colour:silver:Step found: " + game_clock.nextstep + " (" + game_clock.nextstep.alias + ")}")
+        if (game_clock.testing) msg("Step found: " + game_clock.nextstep + " (" + game_clock.nextstep.alias + ")")
         // this is used by wait
         game_clock.event = true
         step = game_clock.nextstep
         game_clock.nextstep = null
         do(step, "look")
       }
+      if (not GetObject("NpcTurnScript") = null) {
+        do(NpcTurnScript, "script")
+      }
+      EachTurn
       game.clock = TimeAsString()
-      IncUserTime
     }
   ]]></function>
-
-
-  <!--
-  Can be overridden to have stuff happened each minute.
-  This will fire after any event scheduled for this time.
-  -->  
-  <function name="IncUserTime">
-  </function>
-  
 
 
   <!--
@@ -217,6 +209,9 @@
       game_clock.hours24 = (game_clock.time / 60) % 24
       game_clock.days = game_clock.time / (60 * 24) + 1
     }
+    if (not GetObject("NpcTurnScript") = null) {
+      DisableTurnScript (NpcTurnScript)
+    }
     game.clock = TimeAsString()
   </function>
   
@@ -273,72 +268,40 @@
   
 
   <!--
-  This gets called only when the action is successful; for text that is part of
-  the narrative. You can override this in your own code to flag that a command was successful
-  or to display narrative text differently to meta text.
+  This function is called each proper turn, after the events have been done.
+  It can be over-ridden to do whatever.
   -->
-  <function name="P" parameters="s">
-    msg(s)
-  </function> 
+  <function name="EachTurn"><![CDATA[
+  ]]></function>
+  
 
   <!--
-  Displays the the date as a string. Dates are relative to the year game_clock.startyear, which is 2000 by default.
-  You can override DisplayDate to alter how the date is actually shown.
-  Day 1 is the first of January, 2000 (or whatever year you set game_clock.startyear to). This means you must set the day to 
-  greater than zero in set time.
-  Note that this is an approximation to the Gregorian Calendar; it will handle simple leap years, but is not perfect.
-  It will consider 1900, for example, to be a leap year, however, it is fine for 1901 to 2099, which should cover most games.
-  This could be readily adapted for a fantasy calender.
+  Moves time forward by the given number of minutes, skipping any intervening events.
+  Note that turnscripts will be run once only.
+  Use with care!
   -->
-  <function name="Date" type="string">
-    year = game_clock.startyear
-    day = game_clock.days
-    if (1 > day) error("Date function cannot cope with a day of zero or less")
-    // what year is it?
-    flag = true
-    while (flag) {
-      if (year % 4 = 0) {
-        days_this_year = 366
-      }
-      else {
-        days_this_year = 365
-      }
-      if (day > days_this_year) {
-        year = year + 1
-        day = day - days_this_year
-      }
-      else {
-        flag = false
-      }
-    }
-    // days in month
-    if (year % 4 = 0) {
-      days_in_months = Split("31;29;31;30;31;30;31;31;30;31;30;31", ";")
-    }
-    else {
-      days_in_months = Split("31;28;31;30;31;30;31;31;30;31;30;31", ";")
-    }
-    // what month is it?
-    month = 1
-    for (i, 0, 11) {
-      days_in_month = ToInt(StringListItem(days_in_months, i))
-      if (day > days_in_month) {
-        month = month + 1
-        day = day - days_in_month
-      }
-      else {
-        return (DisplayDate(year, month, day))
-      }
-    }
-  </function>
+  <function name="SkipTime" parameters="duration"><![CDATA[
+    game_clock.time = game_clock.time + duration
+    game_clock.minutes = game_clock.time % 60
+    game_clock.hours24 = (game_clock.time / 60) % 24
+    game_clock.days = game_clock.time / (60 * 24)
+  ]]></function>
+
   
   <!--
-  Shows the date, nicely formatted
+  Returns true if the game time is after the given time. This version works for each day,
+  so IsAfterDaily("19:00") is true after 7 pm each day.
   -->
-  <function name="DisplayDate" parameters="year, month, day" type="string">
-    months = Split(";January;February;March;April;May;June;July;August;September;October;November;December", ";")
-    return ("" + day + "th of " + StringListItem(months, month) + ", " + year)
-  </function> 
-  
-  
+  <function name="IsAfterDaily" parameters="time" type="boolean"><![CDATA[
+    if (TypeOf(time) = "string") {
+      l = Split(time, ":")
+      if (not ListCount(l) = 2) error("SetTime failed to understand " + time)
+      days = game_clock.time / (60 * 24)
+      hours24 = ToInt(StringListItem(l, 0))
+      minutes = ToInt(StringListItem(l, 1))
+      time = (days * 24 + hours24) * 60 + minutes
+    }
+    return (game_clock.time > time)
+  ]]></function>
+
 </library>
