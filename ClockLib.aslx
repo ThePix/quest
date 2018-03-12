@@ -19,7 +19,7 @@
   https://github.com/ThePix/quest/wiki/Clock-Library
 
   As of version 3.1
-  This is now useable with NpcLib 1.6 (but not 1.5 - check which you have)
+  This is now useable with NpcLib 1.5 (but not 1.4 - check which you have)
   Note that you MUST use SetTime to set the initial time, as this will disable the
   standard NpcLib turnscript.
   -->
