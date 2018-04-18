@@ -1,0 +1,260 @@
+<library>
+  <!--
+  If you are viewing this on GitHub and want to download it, right click on the RAW button
+  just above, and select "Save link as..."
+  -->
+
+
+  <!--
+  EnhancedIt v1.0
+  
+  Quest version: 5.7
+  Written by: The Pixie, 2018
+
+  Tutorial and notes here:
+  https://github.com/ThePix/quest/wiki/Conversations:-Library
+  
+  If you use this with earlier versions of Quest it should still work fine, just test first!
+  
+  IMPORTANT
+  You must add this line to youyr game start script:
+  game.lastobjects = NewObjectDictionary()
+  
+  
+  -->
+
+
+
+
+  <turnscript name="void_unreachables">
+    <script>
+      deletions = NewStringList()
+      scope = ScopeReachable()
+      foreach (key, game.lastobjects) {
+        obj = ObjectDictionaryItem(game.lastobjects, key)
+        if (not obj in scope) {
+          list add (deletions, key)
+        }
+      }
+      foreach (key, deletions) {
+        dictionary remove (game.lastobjects, key)
+      }
+    </script>
+  </turnscript>
+
+  <function name="DoAskTell" parameters="object, text, property, defaultscript, defaulttemplate"><![CDATA[
+    // The only change are the next four lines and the close braces at the end
+    if (DictionaryContains(game.lastobjects, text)) {
+      DoAskTell (object, GetDisplayAlias(ObjectDictionaryItem(game.lastobjects, text)), property, defaultscript, defaulttemplate)
+    }
+    else {
+      handled = false
+      maxstrength = 0
+      match = null
+      text = LCase(text)
+      if (TypeOf(object, property) = "scriptdictionary") {
+        dictionary = GetAttribute(object, property)
+        foreach (keywords, dictionary) {
+          strength = GetKeywordsMatchStrength(LCase(keywords), text)
+          if (strength >= maxstrength and strength>0) {
+            match = ScriptDictionaryItem(dictionary, keywords)
+            maxstrength = strength
+          }
+        }
+        if (match <> null) {
+          parameters = NewObjectDictionary()
+          dictionary add (parameters, "this", object)
+          invoke (match, parameters)
+          handled = true
+        }
+      }
+      if (not handled) {
+        if (HasScript(object, defaultscript)) {
+          d = NewDictionary()
+          dictionary add (d, "text", text)
+          do (object, defaultscript, d)
+        }
+        else {
+          msg (DynamicTemplate(defaulttemplate, object))
+        }
+      }
+    }
+  ]]></function>
+  
+  <function name="ResolveNextName"><![CDATA[
+    resolvedall = false
+    queuetype = TypeOf(game.pov, "currentcommandvarlistqueue")
+    if (queuetype = "stringlist") {
+      queuelength = ListCount(game.pov.currentcommandvarlistqueue)
+      if (queuelength > 0) {
+        // Pop next variable off the queue
+        var = StringListItem(game.pov.currentcommandvarlistqueue, 0)
+        if (queuelength = 1) {
+          game.pov.currentcommandvarlistqueue = null
+        }
+        else {
+          newqueue = NewStringList()
+          for (i, 1, queuelength - 1) {
+            list add (newqueue, StringListItem(game.pov.currentcommandvarlistqueue, i))
+          }
+          game.pov.currentcommandvarlistqueue = newqueue
+        }
+        // Resolve variable
+        value = StringDictionaryItem(game.pov.currentcommandvarlist, var)
+        if (value <> "") {
+          result = null
+          resolvinglist = false
+          // This is to resolve issue 626
+          if (StartsWith(var, "objectexit")) {
+            result = ResolveName(var, value, "exit")
+          }
+          if (result = null) {
+            if (StartsWith(var, "object")) {
+              if (HasScript(game.pov.currentcommandpattern, "multipleobjects")) {
+                game.pov.currentcommandpendingobjectlist = NewObjectList()
+                game.pov.currentcommandpendingvariable = var
+                do (game.pov.currentcommandpattern, "multipleobjects")
+                ResolveNameList (value, "object")
+                resolvinglist = true
+              }
+              else {
+                result = ResolveName(var, value, "object")
+              }
+            }
+            else if (StartsWith(var, "exit")) {
+              result = ResolveName(var, value, "exit")
+            }
+            else if (StartsWith(var, "text")) {
+              result = StringDictionaryItem(game.pov.currentcommandvarlist, var)
+            }
+            else {
+              error ("Unhandled command variable '" + var + "' - command variable names must begin with 'object', 'exit' or 'text'")
+            }
+          }
+          // at this point, ResolveName has returned - either an object name, unresolved, or pending
+          if (result = null) {
+            if ((not resolvinglist) and LengthOf(GetString(game.pov, "currentcommandpendingvariable")) = 0) {
+              UnresolvedCommand (value, var)
+            }
+          }
+          else {
+            AddToResolvedNames (var, result)
+          }
+        }
+        else {
+          ResolveNextName
+        }
+      }
+      else {
+        resolvedall = true
+      }
+    }
+    else if (queuetype = "null") {
+      resolvedall = true
+    }
+    else {
+      error ("Invalid queue type")
+    }
+    if (resolvedall) {
+      // This is the only bit changed, next ten lines
+      foreach (obj, game.pov.currentcommandresolvedobjects) {
+        if (obj.gender in game.lastobjects) {
+          dictionary remove (game.lastobjects, obj.gender)
+        }
+        dictionary add (game.lastobjects, obj.gender, obj)
+        if (obj.article in game.lastobjects) {
+          dictionary remove (game.lastobjects, obj.article)
+        }
+        dictionary add (game.lastobjects, obj.article, obj)
+      }
+      if (not DictionaryContains(game.pov.currentcommandresolvedelements, "multiple")) {
+        dictionary add (game.pov.currentcommandresolvedelements, "multiple", false)
+      }
+      if (not GetBoolean(game.pov.currentcommandpattern, "isundo")) {
+        if (LengthOf(game.pov.currentcommand) > 0) {
+          start transaction (game.pov.currentcommand)
+        }
+      }
+      if (not GetBoolean(game.pov.currentcommandpattern, "isoops")) {
+        // TO DO: game.unresolved* should be game.pov.unresolved*
+        game.unresolvedcommand = null
+        game.unresolvedcommandvarlist = null
+        game.unresolvedcommandkey = null
+      }
+      if (HasScript(game.pov.currentcommandpattern, "script")) {
+        // This is the bit that actually runs the commands
+        do (game.pov.currentcommandpattern, "script", game.pov.currentcommandresolvedelements)
+      }
+      HandleNextCommandQueueItem
+    }
+  ]]></function>
+  
+  
+  <function name="ResolveNameFromList" parameters="variable, value, objtype, scope, secondaryscope" type="object"><![CDATA[
+    value = Trim(LCase(value))
+    fullmatches = NewObjectList()
+    partialmatches = NewObjectList()
+    foreach (obj, scope) {
+      name = LCase(GetDisplayAlias(obj))
+      CompareNames (name, value, obj, fullmatches, partialmatches)
+      if (obj.alt <> null) {
+        foreach (altname, obj.alt) {
+          CompareNames (LCase(altname), value, obj, fullmatches, partialmatches)
+        }
+      }
+    }
+    // allow referring to objects from the previous command by gender or article
+    // This is the only bit changed.
+    if (objtype = "object") {
+      foreach (key, game.lastobjects) {
+        CompareNames (key, value, ObjectDictionaryItem(game.lastobjects, key), fullmatches, partialmatches)
+      }
+    }
+    // Also check the secondary scope, but only if we have not found anything yet
+    if (ListCount(fullmatches) = 0 and ListCount(partialmatches) = 0 and not secondaryscope = null) {
+      foreach (obj, secondaryscope) {
+        name = LCase(GetDisplayAlias(obj))
+        CompareNames (name, value, obj, fullmatches, partialmatches)
+        if (obj.alt <> null) {
+          foreach (altname, obj.alt) {
+            CompareNames (LCase(altname), value, obj, fullmatches, partialmatches)
+          }
+        }
+      }
+    }
+    if (ListCount(fullmatches) = 1) {
+      return (ListItem(fullmatches, 0))
+    }
+    else if (ListCount(fullmatches) = 0 and ListCount(partialmatches) = 1) {
+      return (ListItem(partialmatches, 0))
+    }
+    else if (ListCount(fullmatches) + ListCount(partialmatches) = 0) {
+      return (null)
+    }
+    else {
+      candidates = ListCompact(fullmatches + partialmatches)
+      if (LengthOf(variable) > 0) {
+        // single object command, so after showing the menu, add the object to game.pov.currentcommandresolvedelements
+        game.pov.currentcommandpendingvariable = variable
+        ShowMenu (DynamicTemplate("DisambiguateMenu", value), candidates, true) {
+          varname = game.pov.currentcommandpendingvariable
+          game.pov.currentcommandpendingvariable = null
+          if (result <> null) {
+            AddToResolvedNames (varname, GetObject(result))
+          }
+        }
+      }
+      else {
+        // multi-object command, so after showing the menu, add the object to the list
+        game.pov.currentcommandmultiobjectpending = true
+        ShowMenu (DynamicTemplate("DisambiguateMenu", value), candidates, true) {
+          if (result <> null) {
+            list add (game.pov.currentcommandpendingobjectlist, GetObject(result))
+            ResolveNextNameListItem
+          }
+        }
+      }
+      return (null)
+    }
+  ]]></function>
+</library>  
