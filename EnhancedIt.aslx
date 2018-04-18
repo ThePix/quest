@@ -29,7 +29,7 @@
   <turnscript name="void_unreachables">
     <script>
       deletions = NewStringList()
-      scope = ScopeReachable()
+      scope = ScopeVisible()
       foreach (key, game.lastobjects) {
         obj = ObjectDictionaryItem(game.lastobjects, key)
         if (not obj in scope) {
