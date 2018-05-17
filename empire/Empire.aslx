@@ -1,0 +1,299 @@
+<!--Saved by Quest 5.6.5783.24153-->
+<asl version="550">
+  <include ref="English.aslx" />
+  <include ref="Core.aslx" />
+  <include ref="lib.xml" />
+  <include ref="interface.xml" />
+  <game name="Star Empire v0.1">
+    <gameid>6b536464-42df-422b-8a83-bc2ca1397e85</gameid>
+    <version>0.0</version>
+    <firstpublished>2016</firstpublished>
+    <subtitle>Can you rule the galaxy?</subtitle>
+    <author>The Pixie</author>
+    <category>Sci-Fi</category>
+    <setcustomwidth />
+    <customwidth type="int">900</customwidth>
+    <setcustompadding />
+    <enablehyperlinks type="boolean">false</enablehyperlinks>
+    <autodescription type="boolean">false</autodescription>
+    <showdescriptiononenter type="boolean">false</showdescriptiononenter>
+    <echocommand type="boolean">false</echocommand>
+    <autodisplayverbs type="boolean">false</autodisplayverbs>
+    <defaultwebfont>Dosis</defaultwebfont>
+    <scale type="int">1</scale>
+    <x type="int">300</x>
+    <y type="int">200</y>
+    <feature_pictureframe />
+    <showcommandbar type="boolean">false</showcommandbar>
+    <start type="script">
+      player.time = 1
+      player.credits = 500
+    </start>
+    <roomenter type="script">
+    </roomenter>
+  </game>
+  <object name="throneroom">
+    <inherit name="editor_room" />
+    <alias>Throne Room</alias>
+    <usedefaultprefix type="boolean">false</usedefaultprefix>
+    <enter type="script">
+      request (SetInterfaceString, "PlacesObjectsLabel=News")
+      JS.eval ("$('#page1').html('The throne room is the hub of your command centre, giving an overview of your empire.');")
+    </enter>
+    <firstenter type="script"><![CDATA[
+      msg ("<i>Welcome to your empire. It is not much, but you control one planet, with a basic mine, and a fleet of five ship Cobra ships.</i>")
+      msg ("<i>This is just a \"proof of concept\" and there is not much you can do yet. If you research \"Fields\" you will soon discover photon torpedoes, but there is nothing else to discover yet. Do take a look at the star map though!</i>")
+      GenerateGalaxy (20)
+      msg ("It is 237 years since the collapse. After two centuries of just struggling to live, the survivors on your planet are starting to look to the future. Old technology has been recovered from the ruins of the ancient cities, and five \"Cobra\" class warships have been built, and currently orbit the planet.")
+      msg ("Are you ready to seize the memoment? To lead your people to the stars, to forge a new empire?")
+    ]]></firstenter>
+    <beforeenter type="script">
+      ClearScreen
+    </beforeenter>
+    <object name="player">
+      <inherit name="editor_object" />
+      <inherit name="editor_player" />
+      <credits type="int">0</credits>
+      <time type="int">0</time>
+      <changedtime type="script">
+        JS.eval ("$('#clock').html('" + this.time + "');")
+      </changedtime>
+      <changedcredits type="script">
+        JS.eval ("$('#cash').html('" + this.credits + "');")
+      </changedcredits>
+    </object>
+    <exit alias="north" to="warroom">
+      <inherit name="northdirection" />
+    </exit>
+    <exit alias="south" to="researchroom">
+      <inherit name="southdirection" />
+    </exit>
+    <exit alias="east" to="designroom">
+      <inherit name="eastdirection" />
+    </exit>
+    <exit alias="west" to="maproom">
+      <inherit name="westdirection" />
+    </exit>
+  </object>
+  <object name="warroom">
+    <inherit name="editor_room" />
+    <alias>War Room</alias>
+    <usedefaultprefix type="boolean">false</usedefaultprefix>
+    <enter type="script">
+      request (SetInterfaceString, "PlacesObjectsLabel=Fleets")
+      JS.eval ("$('#page1').html('Organise and deploy your fleets.');")
+    </enter>
+    <beforeenter type="script">
+      ClearScreen
+    </beforeenter>
+    <object name="fleet1">
+      <inherit name="editor_object" />
+      <displayverbs type="stringlist">
+        <value>Look at</value>
+      </displayverbs>
+      <alias>Fleet 1</alias>
+      <look type="script"><![CDATA[
+        s = "<i>" + this.alias + "</i>"
+        foreach (o, GetDirectChildren(this)) {
+          s = s + "<br/>" + o.design.alias + ": " + o.number
+        }
+        msg (s)
+      ]]></look>
+      <object name="fleetdivision">
+        <inherit name="editor_object" />
+        <number type="int">5</number>
+        <design type="object">design1</design>
+      </object>
+    </object>
+    <exit alias="south" to="throneroom">
+      <inherit name="southdirection" />
+    </exit>
+  </object>
+  <object name="researchroom">
+    <inherit name="editor_room" />
+    <alias>Research Labs</alias>
+    <usedefaultprefix type="boolean">false</usedefaultprefix>
+    <enter type="script">
+      request (SetInterfaceString, "PlacesObjectsLabel=Research areas")
+      JS.eval ("$('#page1').html('Decide how much of your resources you will spend on each field of science. Each turn will bring you nearer to new discoveries.');")
+    </enter>
+    <beforeenter type="script">
+      ClearScreen
+    </beforeenter>
+    <exit alias="north" to="throneroom">
+      <inherit name="northdirection" />
+    </exit>
+    <object name="fields">
+      <inherit name="researcharea" />
+      <inherit name="editor_object" />
+      <alias>Fields</alias>
+      <text>This area of science is to do with fields, principally electromagnetic fields and gravity fields. Research in this direction may lead to artificial gravity, gravity bombs, anti-gravity and photon torpedeos.</text>
+      <object name="photon_torpedo">
+        <inherit name="editor_object" />
+        <inherit name="discovery" />
+        <look>The photon torpedo is an unguided missile contructed of "hard" light.</look>
+        <discovered type="boolean">false</discovered>
+        <progress type="int">50</progress>
+        <alias>Photon Torpedo</alias>
+        <discoverytype>Secondary weapon</discoverytype>
+      </object>
+      <object name="basiclaser">
+        <inherit name="editor_object" />
+        <inherit name="discovery" />
+        <alias>Basic laser</alias>
+        <progress type="int">0</progress>
+        <discoverytype>Primary weapon</discoverytype>
+        <discovered />
+      </object>
+    </object>
+    <object name="particles">
+      <inherit name="researcharea" />
+      <inherit name="editor_object" />
+      <alias>Particle physics</alias>
+      <text>Research in construction will allow bigger ships and buildings to be constructed.</text>
+    </object>
+    <object name="construction">
+      <inherit name="editor_object" />
+      <inherit name="researcharea" />
+      <alias>Construction</alias>
+      <object name="caravel">
+        <inherit name="editor_object" />
+        <inherit name="discovery" />
+        <progress type="int">0</progress>
+        <discoverytype>Vessel</discoverytype>
+        <size type="int">1</size>
+        <cost type="int">100</cost>
+        <alias>Caravel</alias>
+        <discovered />
+      </object>
+      <object name="basicmine">
+        <inherit name="editor_object" />
+        <inherit name="discovery" />
+        <alias>Basic mine</alias>
+        <cost type="int">70</cost>
+        <progress type="int">0</progress>
+        <size type="int">1</size>
+        <discoverytype>Building</discoverytype>
+        <economy type="int">25</economy>
+        <text>Used to extract metals and other materials from the planet.</text>
+        <discovered />
+      </object>
+      <object name="basicdockyard">
+        <inherit name="editor_object" />
+        <inherit name="discovery" />
+        <alias>Spacedock</alias>
+        <progress type="int">0</progress>
+        <size type="int">1</size>
+        <discoverytype>Building</discoverytype>
+        <economy type="int">-10</economy>
+        <text>Used to extract metals and other materials from the planet.</text>
+        <cost type="int">200</cost>
+        <discovered />
+      </object>
+    </object>
+  </object>
+  <object name="designroom">
+    <inherit name="editor_room" />
+    <alias>Design Office</alias>
+    <usedefaultprefix type="boolean">false</usedefaultprefix>
+    <enter type="script">
+      request (SetInterfaceString, "PlacesObjectsLabel=Designs")
+      JS.eval ("$('#page1').html('Here you can design ships for your fleet, using the technologies you have uncovered.');")
+    </enter>
+    <beforeenter type="script">
+      ClearScreen
+    </beforeenter>
+    <object name="design1">
+      <inherit name="editor_object" />
+      <alias>Cobra</alias>
+      <displayverbs type="stringlist">
+        <value>Look at</value>
+      </displayverbs>
+      <attr name="primary_weapon" type="object">basiclaser</attr>
+      <vessel type="object">caravel</vessel>
+      <look type="script"><![CDATA[
+        msg ("<i>Name:</i> " + this.alias)
+        msg ("<i>Body:</i> " + this.vessel.alias)
+        foreach (s, Split("Primary weapon;Secondary weapon;Turret;FTL engine;Sub-light engine;Sensor;Cloak;Other", ";")) {
+          s2 = Replace(LCase(s), " ", "_")
+          if (HasObject(this, s2)) {
+            o = GetAttribute(this, s2)
+            msg ("<i>" + s + ":</i> " + o.alias)
+          }
+        }
+      ]]></look>
+    </object>
+    <exit alias="west" to="throneroom">
+      <inherit name="westdirection" />
+    </exit>
+  </object>
+  <object name="maproom">
+    <inherit name="editor_room" />
+    <alias><![CDATA[Stars & Planets]]></alias>
+    <usedefaultprefix type="boolean">false</usedefaultprefix>
+    <enter type="script">
+      request (SetInterfaceString, "PlacesObjectsLabel=Star systems")
+      Map
+      JS.eval ("$('#page1').html('Use the map to explore the galaxy. Click the side arrows to scroll, the + and - to zoom in and out and the square to centre the view.');")
+    </enter>
+    <onexit type="script">
+      JS.eval ("$('#gamePanel').css('display', 'none');")
+    </onexit>
+    <beforeenter type="script">
+      ClearScreen
+    </beforeenter>
+    <object name="homeworld">
+      <inherit name="editor_object" />
+      <inherit name="starsystem" />
+      <alias>Home world</alias>
+      <x type="int">0</x>
+      <y type="int">0</y>
+      <colour>red</colour>
+      <id type="int">0</id>
+      <owned />
+      <text>This is your home world; it has a pleasant atmosphere and a varied geography. An ideal base for your empire.</text>
+      <object name="building1">
+        <inherit name="editor_object" />
+        <inherit name="building" />
+        <count type="int">1</count>
+        <alias>Command Centre</alias>
+        <prototype type="object">commandcentre</prototype>
+      </object>
+      <object name="building2">
+        <inherit name="editor_object" />
+        <inherit name="building" />
+        <count type="int">1</count>
+        <alias>Basic Mine (1)</alias>
+        <displayverbs type="stringlist">
+          <value>Look at</value>
+          <value>Construct</value>
+          <value>Condemn</value>
+        </displayverbs>
+        <prototype type="object">basicmine</prototype>
+      </object>
+      <object name="building3">
+        <inherit name="editor_object" />
+        <inherit name="building" />
+        <count type="int">1</count>
+        <alias>Basic dock (1)</alias>
+        <prototype type="object">basicdockyard</prototype>
+      </object>
+    </object>
+    <exit alias="east" to="throneroom">
+      <inherit name="eastdirection" />
+    </exit>
+  </object>
+  <object name="nowhere">
+    <inherit name="editor_room" />
+    <object name="commandcentre">
+      <inherit name="editor_object" />
+      <inherit name="discovery" />
+      <alias>Command Centre</alias>
+      <progress type="int">0</progress>
+      <size type="int">1</size>
+      <discoverytype>Building</discoverytype>
+      <economy type="int">0</economy>
+      <text>It is from here that you control your empire. You can only have one, and if you ever lose it, you have lost the game.</text>
+    </object>
+  </object>
+</asl>

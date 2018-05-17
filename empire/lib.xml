@@ -1,0 +1,323 @@
+<library>
+
+  <!--
+  Metals (basic mine)
+  Organics (from a Refinery complex)
+  Radioactivies
+  Deuterium
+  
+  Consumer goods
+  Electronics
+
+  Objet d'art
+  Entertainment
+
+  Psionics
+  Pilots
+  Technicians
+  
+  
+  
+
+
+  sciences:
+  particles: laser, drives, coms, sensors
+  fields: clocking, sensors, warp drive, anti-grav
+  construction: buildings and ships
+  mentalism: navigators, propaganda, mindblast
+  mysticism: 
+  organics: bioships, hydroponics, cheap life support, vat soldiers, golems (with mysticism)
+  QM: instant communication via quantum entanglement
+  Advanced materials
+  Cybernetics
+  
+  
+  A discovery can have a
+  cost1
+  cost2
+  req1
+  req2
+  prod
+  
+  Each is a string, conisting of a number and a name with no spaces
+
+  science (parent)
+  progress
+  prereq
+  discoverytype
+  
+
+  
+  -->
+
+
+
+  <verb>
+    <property>administrate</property>
+    <pattern>administrate</pattern>
+    <defaultexpression>"You can't administrate " + object.article + "."</defaultexpression>
+  </verb>
+  <verb>
+    <property>increase</property>
+    <pattern>increase</pattern>
+    <defaultexpression>"You can't increase " + object.article + "."</defaultexpression>
+  </verb>
+  <verb>
+    <property>decrease</property>
+    <pattern>decrease</pattern>
+    <defaultexpression>"You can't decrease " + object.article + "."</defaultexpression>
+  </verb>
+  <verb>
+    <property>construct</property>
+    <pattern>construct</pattern>
+    <defaultexpression>"You can't construct " + object.article + "."</defaultexpression>
+  </verb>
+  <verb>
+    <property>condemn</property>
+    <pattern>condemn</pattern>
+    <defaultexpression>"You can't condemn " + object.article + "."</defaultexpression>
+  </verb>
+ 
+
+
+
+
+
+  <command name="NextTurn">
+    <pattern>wait;next;next turn;turn</pattern>
+    <script><![CDATA[
+      msg ("A year passes...")
+      player.time = player.time + 1
+      income = 0
+      foreach (o, GetDirectChildren(researchroom)) {
+        if (not o = player) {
+          o.progress = o.progress + o.commit
+          income = income - o.commit
+          foreach (o2, GetDirectChildren(o)) {
+            if (not o2.discovered) {
+              if (o2.progress < o.progress) {
+                o2.discovered = true
+                msg ("You have discovered " + o2.alias)
+                o.count = o.count + 1
+              }
+            }
+          }
+        }
+      }
+
+      foreach (o, GetDirectChildren(maproom)) {
+        if (not o = player) {
+          foreach (o2, GetDirectChildren(o)) {
+            income = income + o2.count * o2.prototype.economy
+          }
+        }
+      }
+      
+      player.credits = player.credits + income
+    ]]></script>
+  </command>
+
+
+
+ 
+
+  <type name="researcharea">
+    <progress type="int">0</progress>
+    <commit type="int">0</commit>
+    <count type="int">0</count>
+
+    <look type="script"><![CDATA[
+      msg ("<i>Name:</i> " + this.alias)
+      msg ("<i>Progress:</i> " + this.progress)
+      msg ("<i>Annual commitment:</i> " + this.commit)
+      msg ("<i>Discoveries:</i> " + this.count)
+      msg ("<i>Description:</i> " + this.text)
+    ]]></look>
+    
+    <increase type="script"><![CDATA[
+      this.commit = this.commit + 10
+      msg ("Research on <i>" + this.alias + "</i> is increased 10 points (now " + this.commit + ").")
+      if (this.commit = 10) this.displayverbs = Split("Look at|Increase|Decrease", "|")
+    ]]></increase>
+    
+    <decrease type="script"><![CDATA[
+      this.commit = this.commit - 10
+      msg ("Research on <i>" + this.alias + "</i> is decreased 10 points (now " + this.commit + ").")
+      if (this.commit = 0) this.displayverbs = Split("Look at|Increase", "|")
+    ]]></decrease>
+    
+    <displayverbs type="stringlist">
+      <value>Look at</value>
+      <value>Increase</value>
+    </displayverbs>
+  </type>
+
+  
+  
+  
+  <type name="discovery">
+    <discovered type="boolean">false</discovered>
+    <progress type="int">999999</progress>
+    <economy type="int">0</economy>
+    <look type="script"><![CDATA[
+      msg ("<i>Name:</i> " + this.alias)
+      if (this.economy > 0) {
+        msg ("<i>Income:</i> " + this.economy)
+      }
+      else {
+        msg ("<i>Maintenance:</i> " + (-this.economy))
+      }
+      msg ("<i>Description:</i> " + this.text)
+    ]]></look>
+  </type>
+
+
+  
+  
+  <type name="building">
+    <count type="int">1</count>
+
+    <look type="script"><![CDATA[
+      msg ("<i>Name:</i> " + this.prototype.alias)
+      msg ("<i>Count:</i> " + this.count)
+      msg ("<i>Economy:</i> " + (this.count * this.prototype.economy))
+      msg ("<i>Description:</i> " + this.text)
+    ]]></look>
+
+    <construct type="script"><![CDATA[
+      this.count = this.count + 1
+      msg ("A new <i>" + this.alias + "</i> has been constructed on " + this.parent.alias + " for " + this.prototype.cost + " credits!")
+      player.credits = player.credits - this.prototype.cost
+      if (this.count = 1) this.displayverbs = Split("Look at|Construct|Condemn", "|")
+    ]]></construct>
+    
+    <condemn type="script"><![CDATA[
+      this.count = this.count - 1
+      msg ("A <i>" + this.alias + "</i> has been demolished on " + this.parent.alias + " for " + (this.prototype.cost/10) + " credits.")
+      player.credits = player.credits - this.prototype.cost / 10
+      if (this.count = 0) this.displayverbs = Split("Look at|Construct", "|")
+    ]]></condemn>
+  </type>
+  
+  
+  
+  <type name="starsystem">
+    <displayverbs type="stringlist">
+      <value>Look at</value>
+      <value>Administrate</value>
+    </displayverbs>
+
+    <look type="script"><![CDATA[
+      msg ("<i>Name:</i> " + this.alias)
+      msg ("<i>Star type:</i> " + this.colour)
+      msg ("<i>Description:</i> " + this.text)
+      economy = 0
+      building_count = 0
+      foreach (o, GetDirectChildren(this)) {
+        msg ("<i>" + o.prototype.alias + ":</i> " + o.count)
+        building_count = building_count + o.count
+        economy = economy + o.count * o.prototype.economy
+      }
+      msg ("<i>Economy:</i> " + economy)
+    ]]></look>
+
+    <administrate type="script">
+      player.parent = this
+    </administrate>
+  </type>
+
+
+
+  <function name="GenerateGalaxy" parameters="n">
+    colours = Split("Red,White,Cyan,Blue,DarkBlue,LightBlue,Orange,Purple,Yellow,Lime,Green,Magenta", ",")
+    for (i, 1, n) {
+      create("star_" + i, "starsystem")
+      o = GetObject("star_" + i)
+      o.x = GetRandomInt(-300, 300)
+      o.y = GetRandomInt(-300, 300)
+      o.id = i
+      o.alias = "Star " + i
+      o.colour = StringListItem(colours, GetRandomInt(0, 11))
+      o.parent = maproom
+      o.owned = false
+      o.text = "none"
+    }
+  </function>  
+  
+  
+
+  
+  <tab>
+    <parent>_ObjectEditor</parent>
+    <caption>Empire</caption>
+    <mustnotinherit>editor_room; defaultplayer</mustnotinherit>
+
+  
+
+    
+    <control>
+      <controltype>dropdowntypes</controltype>
+      <caption>Type</caption>
+      <types>*=None; discovery=Discovery; researcharea=Research area</types>
+      <width>150</width>
+    </control>
+
+
+
+    <control>
+      <controltype>richtext</controltype>
+      <caption>Description</caption>
+      <attribute>text</attribute>
+      <mustinherit>researcharea;discovery</mustinherit>
+    </control>
+
+
+    <control>
+      <controltype>number</controltype>
+      <caption>Discovered at</caption>
+      <attribute>progress</attribute>
+      <mustinherit>discovery</mustinherit>
+    </control>
+    
+    <control>
+      <controltype>number</controltype>
+      <caption>Size</caption>
+      <attribute>size</attribute>
+      <mustinherit>discovery</mustinherit>
+    </control>
+    
+    <control>
+      <controltype>number</controltype>
+      <caption>Cost</caption>
+      <attribute>cost</attribute>
+      <mustinherit>discovery</mustinherit>
+    </control>
+    
+    <control>
+      <controltype>number</controltype>
+      <caption>Economy (annual addition - or loss - to the empire's credits)</caption>
+      <attribute>economy</attribute>
+      <mustinherit>discovery</mustinherit>
+    </control>
+    
+    
+    <control>
+      <caption>Type</caption>
+      <controltype>dropdown</controltype>
+      <attribute>discoverytype</attribute>
+      <validvalues type="simplestringlist">Building;Vessel;Primary weapon;Secondary weapon;Turret;FTL engine;Sub-light engine;Sensor;Cloak;Other</validvalues>
+      <mustinherit>discovery</mustinherit>
+    </control>
+    
+    <control>
+      <controltype>script</controltype>
+      <caption>Script to run when added to a ship design</caption>
+      <attribute>effect</attribute>
+      <mustinherit>discovery</mustinherit>
+    </control>
+  </tab>
+  
+</library>
+
+
+

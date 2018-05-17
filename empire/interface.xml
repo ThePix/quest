@@ -1,0 +1,271 @@
+<library>
+
+
+    <object name="interface_obj">
+    <stuff><![CDATA[
+       <div id="spacer1">
+            <br/>
+            <br/>
+            <br/>
+       </div>
+       <div id="spacer2" style="padding:5px;">
+       </div>
+       <div id="command_buttons" style="border:#79b7e7 thin solid; padding: 5px;font-weight: bold;border-radius: 5px;text-align:center;margin-top:50 px;">
+            <span id="wait_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="wait" data-command="wait">Next</a></span>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span id="help_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="help" data-command="help">Help</a></span>
+            <br/>
+            <span id="back_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="back" data-command="back">Back</a></span>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span id="home_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="help" data-command="home">Home</a></span>
+            <br/>
+            <span id="research_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="research" data-command="research">Research Labs</a></span>
+            <br/>
+            <span id="design_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="design" data-command="design">Design Office</a></span>
+            <br/>
+            <span id="military_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="military" data-command="military">War Room</a></span>
+            <br/>
+            <span id="planets_button"  class="ui-widget"><a id="verblink1" style="text-decoration: none;color:Orange;font-size:12pt;" class="cmdlink commandlink" data-elementid="planets" data-command="planets">Stars & Planets</a></span>
+       </div>
+       <div id="clock_div" style="border:#79b7e7 thin solid; padding: 5px;font-weight: bold;border-radius: 5px;text-align:center;margin-top:50 px;">
+            <span id="clock_stuff"  class="ui-widget" style="text-decoration: none;color:#e17009;font-size:12pt;text-align:center;" class="cmdlink commandlink">Turn: <span id="clock">---</span></span>
+            <br/>
+            <span id="cash_stuff"  class="ui-widget" style="text-decoration: none;color:#e17009;font-size:12pt;text-align:center;" class="cmdlink commandlink">Credits: <span id="cash">---</span></span>
+       </div>
+       <div id="dialog_window_1" class="dialog_window" title="Help">
+            <p id="page0">Welcome to <i>Star Empire</i>. Click on the words to the right to navigate to different areas. Clicking "Home" will take you to the throne room, while clicking "Back" will take you back one level. Clicking "Next" to end this turn. Time will pass, and your empire will flourish or fail according to your instructions.</p>
+            <p id="page1" style="display:none;">Click on an object in the lists on the right to see what actions you can perform with them.</p>
+            <p id="page2" style="display:none;">Sorry, no hints yet.</p>
+            <p id="page3" style="display:none;">Created by The Pixie.<br/><br/>Thanks to Alex Warren for creating Quest.</p>
+       </div>
+       <script>
+            function setPage(page) {
+                $('#page0').css('display', 'none');
+                $('#page1').css('display', 'none');
+                $('#page2').css('display', 'none');
+                $('#page3').css('display', 'none');
+                $('#page' + page).css('display', 'block');
+            }
+       
+            $(document).ready(function () {
+                $('#dialog_window_1').dialog({
+	                autoOpen: false,
+                   height: 400,
+                   width: 640,
+                   buttons: {
+	                   "Intro": function() { setPage(0);},
+	                   "Commands": function() { setPage(1);},  
+	                   "Hints": function() { setPage(2);},  
+	                   "Credits": function() { setPage(3);},  
+	                   "Done": function() { $(this).dialog("close");} 
+	               }
+               });
+               $('#dialog_window_log').dialog({
+	                autoOpen: false,
+                   height: 100,
+                   width: 470,
+               });
+            });
+       </script>
+    ]]></stuff>
+    </object>
+  
+
+  <function name="InitUserInterface"><![CDATA[
+    OutputTextNoBr (interface_obj.stuff)
+    JS.eval ("$('#spacer1').insertBefore('#inventoryLabel')")
+    JS.eval ("$('#command_buttons').insertBefore('#inventoryLabel')")
+    JS.eval ("$('#spacer2').insertBefore('#inventoryLabel')")
+    JS.eval ("$('#clock_div').insertBefore('#inventoryLabel')")
+    JS.eval ("$('#compassLabel').css('display', 'none')")
+    JS.eval ("$('#compassAccordion').css('display', 'none')")
+    JS.eval ("$('#statusVarsLabel').css('display', 'none')")
+    JS.eval ("$('#statusVarsAccordion').css('display', 'none')")
+    JS.eval ("$('#log_button').css('display', 'none')")
+    request (SetInterfaceString, "PlacesObjectsLabel=People and Items")
+
+    JS.eval("$('#status').css('background-image', 'none');")
+    JS.eval("$('#status').css('background-color', '#200040');")
+    JS.eval("$('#status').css('border-color', 'black');")
+
+    JS.eval ("$('#inventoryLabel').css('display', 'none')")
+    JS.eval ("$('#inventoryAccordion').css('display', 'none')")
+  ]]></function>  
+
+
+
+  
+  <command>
+    <pattern>help</pattern>
+    <script>
+      JS.eval ("$('#dialog_window_1').dialog('open')")
+    </script>
+  </command>
+  
+
+  <command>
+    <pattern>home</pattern>
+    <script>
+      player.parent = throneroom
+    </script>
+  </command>
+  
+  <command>
+    <pattern>planets</pattern>
+    <script>
+      player.parent = maproom
+    </script>
+  </command>
+  
+  <command>
+    <pattern>research</pattern>
+    <script>
+      player.parent = researchroom
+    </script>
+  </command>
+  
+  <command>
+    <pattern>design</pattern>
+    <script>
+      player.parent = designroom
+    </script>
+  </command>
+  
+  <command>
+    <pattern>military</pattern>
+    <script>
+      player.parent = warroom
+    </script>
+  </command>
+  
+
+  <command>
+    <pattern>back</pattern>
+    <script>
+      if (HasAttribute(player.parent, "parent")) {
+        player.parent = player.parent.parent
+      }
+      else {
+        player.parent = throneroom
+      }
+    </script>
+  </command>
+  
+
+  
+  
+  <object name="mapobject">
+    <mapcss>
+      .noselect {
+	    -webkit-touch-callout: none;
+	    -webkit-user-select: none;
+	    -khtml-user-select: none;
+	    -moz-user-select: none;
+	    -ms-user-select: none;
+	    user-select: none;
+	  }
+    </mapcss>
+    <mapscripts>
+     function ArrowClick(s) {
+        ASLEvent("ArrowCallback", s);
+      }
+     function StarClick(s) {
+        ASLEvent("StarCallback", s);
+      }
+    </mapscripts>
+  </object>  
+  
+  
+  
+  <function name="Map"><![CDATA[
+    s = "<div><svg width=\"600\" height=\"400\">"
+    s = s + "<script>" + mapobject.mapscripts + "</script>"
+    s = s + "<rect width=\"600\" height=\"400\" style=\"fill:rgb(0,0,0);stroke-width:1;stroke:rgb(128,128,128)\" />"
+    foreach (o, GetDirectChildren(maproom)) {
+      if (not o = player) {
+        px = game.x + o.x * game.scale
+        py = game.y + o.y * game.scale
+        if (o.owned) {
+          s = s + "<circle cx=\""+ px+ "\" cy=\""+ py+ "\" r=\"" + (5 + game.scale) + "\" fill=\"#000040\" onmousedown=\"StarClick(" + o.id + ")\"/>"
+        }
+        else {
+          s = s + "<circle cx=\""+ px+ "\" cy=\""+ py+ "\" r=\"" + (5 + game.scale) + "\" fill=\"black\" onmousedown=\"StarClick(" + o.id + ")\"/>"
+        }
+        s = s + "<circle cx=\""+ px+ "\" cy=\""+ py+ "\" r=\"" + (1 * game.scale) + "\" fill=\"" + o.colour + "\" onmousedown=\"StarClick(" + o.id + ")\"/>"
+        if (game.scale > 2) {
+          s = s + "<text class=\"noselect\" x=\""+ (px + 3)+ "\" y=\""+ (py + 5)+ "\" fill=\"grey\" font-family=\"sans-serif\" font-size=\"10\" transform=\"rotate(30 "+ px + " "+ py+ ")\">" + o.alias + "</text>"
+        }
+      }
+    }
+    s = s + "<text class=\"noselect\" x=\"25\" y=\"280\" fill=\"grey\" font-family=\"sans-serif\" font-size=\"12\" transform=\"rotate(-90 25 280)\">Imperial Cartographic Services</text>"
+    s = s + "<text class=\"noselect\" x=\"575\" y=\"100\" fill=\"grey\" font-family=\"sans-serif\" font-size=\"12\" transform=\"rotate(90 575 100)\">Scale: " + game.scale + ", X offset: " + game.x + ", Y offset: " + game.y + "</text>"
+    s = s + "<polygon points=\"10,100 10,300 2,200\" fill=\"grey\" onmousedown=\"ArrowClick(3)\"/>"
+    s = s + "<polygon points=\"590,100 590,300 598,200\" fill=\"grey\" onmousedown=\"ArrowClick(1)\"/>"
+    s = s + "<polygon points=\"200,10 400,10 300,2\" fill=\"grey\" onmousedown=\"ArrowClick(0)\"/>"
+    s = s + "<polygon points=\"200,390 400,390 300,398\" fill=\"grey\" onmousedown=\"ArrowClick(2)\"/>"
+
+    s = s + "<polygon points=\"575,0 600,0 600,25 575,25\" fill=\"darkblue\" onmousedown=\"ArrowClick(4)\"/>"
+    s = s + "<polygon points=\"580,5 595,5 595,20 580,20\" fill=\"grey\" onmousedown=\"ArrowClick(4)\"/>"
+
+    s = s + "<polygon points=\"575,30 600,30 600,55 575,55\" fill=\"darkblue\" onmousedown=\"ArrowClick(5)\"/>"
+    s = s + "<polygon points=\"577,40 585,40 585,32 590,32 590,40 598,40 598,45 590,45 590,53 585,53 585,45 577,45\" fill=\"grey\" onmousedown=\"ArrowClick(5)\"/>"
+
+    s = s + "<polygon points=\"575,60 600,60 600,85 575,85\" fill=\"darkblue\" onmousedown=\"ArrowClick(6)\"/>"
+    s = s + "<polygon points=\"577,70 598,70 598,75 577,75\" fill=\"grey\" onmousedown=\"ArrowClick(6)\"/>"
+
+    s = s + "</svg></div>"
+    JS.eval ("$('#gamePanel').css('display', 'block');")
+    JS.eval ("$('#gamePanel').html('" + s +"');")
+    // Need to do this here as the css method only changes the existing elements
+    JS.eval ("$('.noselect').css('-webkit-touch-callout', 'none')")
+    JS.eval ("$('.noselect').css('-webkit-user-select', 'none')")
+    JS.eval ("$('.noselect').css('-khtml-user-select', 'none')")
+    JS.eval ("$('.noselect').css('-moz-user-select', 'none')")
+    JS.eval ("$('.noselect').css('ms-user-select', 'none')")
+    JS.eval ("$('.noselect').css('user-select', 'none')")
+  ]]></function>
+  
+  <function name="ArrowCallback" parameters="s">
+    if (s = "0") {
+      game.y = game.y + 20
+    }
+    if (s = "1") {
+      game.x = game.x - 20
+    }
+    if (s = "2") {
+      game.y = game.y - 20
+    }
+    if (s = "3") {
+      game.x = game.x + 20
+    }
+    if (s = "4") {
+      game.x = 300
+      game.y = 200
+    }
+    if (s = "5") {
+      game.scale = game.scale * 2
+    }
+    if (s = "6") {
+      if (game.scale > 1) {
+          game.scale = game.scale / 2
+        }
+      }
+    Map
+  </function>
+  
+  <function name="StarCallback" parameters="s">
+    foreach (o, GetDirectChildren(maproom)) {
+      if (not o = player) {
+        if (o.id = ToInt(s)) {
+          do(o, "look")
+        }
+      }
+    }
+  </function>  
+  
+  
+    
+</library>
+
+
+
