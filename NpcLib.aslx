@@ -93,7 +93,7 @@
     <script>
       foreach (o, AllObjects()) {
         if (HasScript(o, "takeaturn")) {
-          msg("Doing " + o.name)
+          PrintIfDebug(o, "Doing " + o.name)
           if (GetBoolean(o, "paused")) {
             o.paused = false
           }
