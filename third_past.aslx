@@ -1,0 +1,152 @@
+<library>
+<?xml version="1.0"?>
+<library>
+  <!--
+  If you are viewing this on GitHub and want to download it, right click on the RAW button
+  just above, and select "Save link as..."
+  -->
+
+  
+  <!--
+  ThirdPersonPastTense v1.0
+  Quest version: 5.8
+  Written by: The Pixie, 2018
+  
+  This needs to be loaded BEFORE Core.aslx
+  
+  Tutorial and notes here:
+  https://github.com/ThePix/quest/wiki/Library:-Third-Person,-Past-Tense
+  -->
+
+  <template name="SeeListHeader">{=CapFirst(player.alias)} could see</template>
+  <template name="GoListHeader">{=CapFirst(player.alias)} could go</template>
+  <template name="NotCarryingAnything">{=CapFirst(player.gender)} was not carrying anything.</template>
+  <template name="CarryingListHeader">{=CapFirst(player.alias)} was carrying</template>
+  <dynamictemplate name="DropSuccessful">"{=CapFirst(player.alias)} dropped " + object.article + "."</dynamictemplate>
+  
+  <template name="UnresolvedObject">I can't see that.</template>
+  <template name="UnresolvedLocation">{=CapFirst(player.alias)} can't go there.</template>
+  <dynamictemplate name="TakeSuccessful">"{=CapFirst(player.alias)} picked " + object.article + " up."</dynamictemplate>
+  <dynamictemplate name="TakeUnsuccessful">"{=CapFirst(player.gender)} can't take " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="FullInventory">WriteVerb(object, "be") + " too heavy to be taken."</dynamictemplate>
+  <dynamictemplate name="MaxObjectsInInventory">"{=CapFirst(player.alias)} could not carry any more items."</dynamictemplate>
+  <dynamictemplate name="MaxObjectsInContainer">"{=CapFirst(player.alias)} could not put more items in " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DropUnsuccessful">"{=CapFirst(player.gender)} could not drop " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="ObjectCannotBeStored">"{=CapFirst(player.gender)} could not put " + object.article + " there."</dynamictemplate>
+  <dynamictemplate name="AlreadyTaken">"{=CapFirst(player.gender)} was already carrying " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="NotCarrying">"{=CapFirst(player.gender)} was not carrying " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="CantUse">"{=CapFirst(player.gender)} could not use " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="CantGive">"{=CapFirst(player.gender)} could not give " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultSpeakTo">WriteVerb(object, "say") + " nothing."</dynamictemplate>
+  <template name="YouAreIn">{=CapFirst(player.alias)} was in</template>
+
+
+  <dynamictemplate name="CantOpen">"{=CapFirst(player.gender)} could not open " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="CantClose">"{=CapFirst(player.gender)} could not close " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="OpenSuccessful">"{=CapFirst(player.alias)} opened " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="CloseSuccessful">"{=CapFirst(player.alias)} closed " + object.article + "."</dynamictemplate>
+  <template name="CannotDoThat">{=CapFirst(player.gender)} could not do that.</template>
+
+  <template name="SurfaceContentsPrefix">on which there was</template>
+  <template name="NoKey">{=CapFirst(player.gender)} did not have the key.</template>
+  <dynamictemplate name="CannotLockOpen">"{=CapFirst(player.gender)} could not lock " + object.article + " when " + object.gender + " " + Conjugate(object, "be") + " open."</dynamictemplate>
+  <dynamictemplate name="SwitchedOn">"{=CapFirst(player.alias)} switched " + object.article + " on."</dynamictemplate>
+  <dynamictemplate name="SwitchedOff">"{=CapFirst(player.alias)} switched " + object.article + " off."</dynamictemplate>
+  <dynamictemplate name="Eaten">"{=CapFirst(player.alias)} ate " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="YouLooking">"{=CapFirst(player.alias)} was looking " + text +"."</dynamictemplate>
+  <dynamictemplate name="LookAtDarkness">"It was too dark to make anything out."</dynamictemplate>
+
+  <template name="NothingToTake">Nothing here to take.</template>
+  <template name="NothingToDrop">{=CapFirst(player.gender)} had nothing to drop.</template>
+  <template name="NothingToWear">{=CapFirst(player.gender)} had nothing to wear.</template>
+  <template name="NothingToRemove">{=CapFirst(player.gender)} had nothing to take off.</template>
+
+	<dynamictemplate name="WearSuccessful">"{=CapFirst(player.alias)} put " + object.article + " on."</dynamictemplate>
+	<dynamictemplate name="WearUnsuccessful">"{=CapFirst(player.gender)} can't wear " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="CannotWearIfNotHeld">"{=CapFirst(player.gender)} would need to get " + object.article + " before {player.gender} can put " + object.article + " on."</dynamictemplate>
+	<dynamictemplate name="CannotRemoveIfNotHeld">"{=CapFirst(player.gender)} would need to get " + object.article + " before {player.gender} can take " + object.article + " off."</dynamictemplate>
+	<dynamictemplate name="AlreadyWearing">"{=CapFirst(player.gender)} are already wearing " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="CannotRemoveIfNotWearing">"{=CapFirst(player.gender)} are not wearing " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="NotRemovable">"{=CapFirst(player.gender)} cannot remove " + object.article + "!"</dynamictemplate>
+	<dynamictemplate name="CannotWearOver">"{=CapFirst(player.gender)} cannot wear that over " + GetDisplayGarment(object) + "."</dynamictemplate>
+	<dynamictemplate name="CannotWearWith">"{=CapFirst(player.gender)} cannot wear that while wearing " + GetDisplayGarment(object) + "."</dynamictemplate>
+	<dynamictemplate name="RemoveSuccessful">"{=CapFirst(player.alias)} take " + object.article + " off."</dynamictemplate>
+	<dynamictemplate name="RemoveFirst">"{=CapFirst(player.gender)} can't remove that while wearing " + GetDisplayGarment(object) + "."</dynamictemplate>
+
+
+  <dynamictemplate name="DefaultBuy">"{=CapFirst(player.gender)} could not buy " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultClimb">"{=CapFirst(player.gender)} could not climb " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultDrink">"{=CapFirst(player.gender)} could not drink " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultEat">"{=CapFirst(player.gender)} could not eat " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultGive">WriteVerb(object1, "do") + " not want " + object2.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultHit">"{=CapFirst(player.gender)} could not hit " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultKill">"{=CapFirst(player.gender)} could not kill " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultKiss">"{=CapFirst(player.gender)} could not kiss " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultKnock">"{=CapFirst(player.gender)} could not knock " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultLick">"{=CapFirst(player.gender)} could not lick " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultLie">"{=CapFirst(player.gender)} could not lie on " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultListenTo">"{=CapFirst(player.gender)} listened, but " + object.gender + " made no sound."</dynamictemplate>
+  <dynamictemplate name="DefaultLock">"{=CapFirst(player.gender)} could not lock " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultMove">"{=CapFirst(player.gender)} could not move " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultPull">"{=CapFirst(player.gender)} could not pull " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultPush">"{=CapFirst(player.gender)} could not push " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultRead">"{=CapFirst(player.gender)} could not read " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultSearch">"{=CapFirst(player.gender)} could not search " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultShow">"{=CapFirst(player.gender)} could not show " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultSit">"{=CapFirst(player.gender)} could not sit on " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultSmell">"{=CapFirst(player.gender)} sniffed, but " + object.gender + " did not smell of much."</dynamictemplate>
+  <dynamictemplate name="DefaultTaste">"{=CapFirst(player.gender)} could not taste " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultThrow">"{=CapFirst(player.gender)} could not throw " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultTie">"{=CapFirst(player.gender)} could not tie " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultTouch">"{=CapFirst(player.gender)} could not touch " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultTurnOn">"{=CapFirst(player.gender)} could not turn " + object.article + " on."</dynamictemplate>
+  <dynamictemplate name="DefaultTurnOff">"{=CapFirst(player.gender)} could not turn " + object.article + " off."</dynamictemplate>
+  <dynamictemplate name="DefaultTurn">"{=CapFirst(player.gender)} could not turn " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultUnlock">"{=CapFirst(player.gender)} could not unlock " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultUntie">"{=CapFirst(player.gender)} could not untie " + object.article + "."</dynamictemplate>
+  <dynamictemplate name="DefaultUseOn">"{=CapFirst(player.gender)} could not use " + object2.article + " that way."</dynamictemplate>
+  <dynamictemplate name="DefaultWear">"{=CapFirst(player.gender)} could not wear " + object.article + "."</dynamictemplate>
+  <template name="DefaultListen">{=CapFirst(player.gender)} could not hear much.</template>
+  <template name="DefaultJump">{=CapFirst(player.gender)} jumped, but nothing happened.</template>
+
+  <template name="EditorVerbDefaultExpression">"{=CapFirst(player.gender)} could not #verb# " + object.article + "."</template>
+  
+  <function name="Conjugate" type="string" parameters="obj, verb">
+    gender = obj.gender
+    if (gender = "he" or gender = "she") {
+      gender = "it"
+    }
+    switch (verb) {
+      case ("be") {
+        switch (gender) {
+          case ("you") {
+            return ("were")
+          }
+          case ("we") {
+            return ("were")
+          }
+          case ("they") {
+            return ("were")
+          }
+          default {
+            return ("was")
+          }
+        }
+      }
+      case ("do") {
+        return ("did")
+      }
+      default {
+        if (EndsWith(verb, "e")) {
+          return (verb + "d")
+        }
+        else {
+          return (verb + "ed")
+        }
+      }
+    }
+  </function>
+  
+
+
+</library>
