@@ -1,0 +1,937 @@
+<library>
+
+  <!--
+  This allows the player to sit, stand or recline on furniture.
+  STAND ON STOOL, GET ON CHAIR, SIT, LIE DOWN ON GROUND
+  Commands to get off: GET OFF, OFF, U, D, STAND, GET OFF CHAIR
+
+  
+  Check the "posture" attribute of the player to see the cureent posture
+  (null if just standing) and "posture_object" to see the object involved.
+  
+  
+  NPCs:
+  If you have CompliantNpcLib, it must be loaded first.
+  You NPCs must inherit both posturing_npc and compliant_npc
+  You can then tell NPCs to sit or recline on furniture.
+  
+  NPCs use the same attributes as the player.
+  -->
+
+	<dynamictemplate name="PosturesNotGetOn">"That's not something you can get on."</dynamictemplate>
+	<dynamictemplate name="PosturesAlreadyOn">"You're already on " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="PosturesAlreadyAre">"You already are."</dynamictemplate>
+	<dynamictemplate name="PosturesNotOnObj">"You're not on " + object.article + "."</dynamictemplate>
+	<dynamictemplate name="PosturesNotOnAny">"You're not on anything."</dynamictemplate>
+	<dynamictemplate name="PosturesStandUp">"You stand up."</dynamictemplate>
+	<dynamictemplate name="PosturesOnGround">"You ### on the ground."</dynamictemplate>
+	<dynamictemplate name="PosturesOnSurface">"You ### on " + object.posture_surface + "."</dynamictemplate>
+  
+	<dynamictemplate name="PosturesCannotSitHere">"You cannot sit here."</dynamictemplate>
+	<dynamictemplate name="PosturesCannotReclineHere">"You cannot lie down here."</dynamictemplate>
+	<dynamictemplate name="PosturesNotNpc">"Tell " + object.article + " all you want, " + object.gender + "'s not going to do anything."</dynamictemplate>
+	<dynamictemplate name="PosturesNpcNotOnObj">WriteVerb(object, "be") + " not on " + obj.article + "."</dynamictemplate>
+	<dynamictemplate name="PosturesNpcNotOnAny">WriteVerb(object, "be") + " not on anything."</dynamictemplate>
+	<dynamictemplate name="PosturesNpcStands">CapFirst(GetDisplayName(object)) + " stands up."</dynamictemplate>
+	<dynamictemplate name="PosturesNpcAlreadyIs">CapFirst(object.gender) + " already is."</dynamictemplate>
+	<dynamictemplate name="PosturesNpcCannotSitHere">"You (or anyone else!) can't sit here!"</dynamictemplate>
+	<dynamictemplate name="PosturesNpcCannotReclineHere">"You (or anyone else!) can't lie down here!"</dynamictemplate>
+  
+
+
+
+  <verb name="standon">
+    <property>stand</property>
+    <pattern>stand on #object#;stand #object#;stand upon #object#</pattern>
+    <defaultexpression>"You can't stand on " + object.article + "."</defaultexpression>
+  </verb>
+  
+  <verb name="reclineon">
+    <pattern>lie on #object#; lie upon #object#; lie down on #object#; lie down upon #object#;recline on #object#;recline upon #object#</pattern>
+    <property>recline</property>
+    <defaultexpression>"You can't recline on " + object.article + "."</defaultexpression>
+  </verb>
+  
+  
+  
+  
+  <command name="go">
+    <pattern type="string"><![CDATA[^go to (?<exit>.*)$|^go (?<exit>.*)$|^(?<exit>north|east|south|west|northeast|northwest|southeast|southwest|in|out|up|down|n|e|s|w|ne|nw|se|sw|o|u|d)$]]></pattern>
+    <unresolved>[UnresolvedLocation]</unresolved>
+    <script>
+      old = game.pov.parent
+      if (exit.visible) {
+        if (exit.locked) {
+          msg (exit.lockmessage)
+        }
+        else if (exit.runscript) {
+          if (HasScript(exit, "script")) {
+            do (exit, "script")
+          }
+        }
+        else if (exit.lookonly) {
+          msg ([UnresolvedLocation])
+        }
+        else {
+          StandUp
+          if (HasString(exit, "message")) {
+            if (not exit.message = "") {
+              if (game.clearscreenonroomenter) {
+                game.currentexitmessage = exit.message
+              }
+              else {
+                msg (exit.message)
+              }
+            }
+          }
+          game.pov.parent = exit.to
+        }
+      }
+      else {
+        msg ([UnresolvedLocation])
+      }
+      if (not old = game.pov.parent) {
+        foreach (npc, FilterByAttribute(AllObjects(), "following", game.pov)) {
+          do (npc, "followplayer")
+        }
+      }
+    </script>
+  </command>
+
+  
+  <command name="cmd_sit">
+    <pattern>sit;sit down</pattern>
+    <scope>none</scope>
+    <script>
+      PostureCommand("sit")
+    </script>
+  </command>
+
+  <command name="cmd_recline">
+    <pattern>lie;lie down;recline</pattern>
+    <scope>none</scope>
+    <script>
+      PostureCommand("recline")
+    </script>
+  </command>  
+  
+  <command name="cmd_kneel">
+    <pattern>kneel;kneel down;kneel up</pattern>
+    <scope>none</scope>
+    <script>
+      if (HasString(game.pov.parent, "posture_surface")) {
+        PostureGroundCommand ("kneel", "PosturesOnSurface")
+      }
+      else {
+        PostureGroundCommand ("kneel", "PosturesOnGround")
+      }
+    </script>
+  </command>  
+  
+  <command name="cmd_crouch">
+    <pattern>crouch;crouch down;squat;squat down</pattern>
+    <scope>none</scope>
+    <script>
+      if (HasString(game.pov.parent, "posture_surface")) {
+        PostureGroundCommand ("crouch", "PosturesOnSurface")
+      }
+      else {
+        PostureGroundCommand ("crouch", "PosturesOnGround")
+      }
+    </script>
+  </command>  
+  
+  <command name="cmd_crawl">
+    <pattern>crawl;get on hands and knees;get on my hands and knees;get on all fours</pattern>
+    <scope>none</scope>
+    <script>
+      if (HasString(game.pov.parent, "posture_surface")) {
+        PostureGroundCommand ("crawl", "PosturesOnSurface")
+      }
+      else {
+        PostureGroundCommand ("crawl", "PosturesOnGround")
+      }
+    </script>
+  </command>  
+  
+  <command name="cmd_get_on_object">
+    <pattern>get on #object#;on #object#</pattern>
+    <script>
+      if (not DoesInherit(object, "furniture_type")) {
+        msg(DynamicTemplate("PosturesNotGetOn", object))
+      }
+      else if (game.pov.posture = object) {
+        msg(DynamicTemplate("PosturesAlreadyOn", object))
+      }
+      else {
+        do (object, object.preferred_posture)
+      }
+    </script>
+  </command>
+  
+  <command name="cmd_stand">
+    <pattern>stand;stand up</pattern>
+    <script>
+      if (game.pov.posture = null) {
+        msg(DynamicTemplate("PosturesAlreadyAre", game))
+      }
+      else {
+        StandUp
+      }
+    </script>
+  </command>
+  
+  <command name="cmd_get_off_obj">
+    <pattern>get off #object#;off #object#</pattern>
+    <script>
+      if (not game.pov.posture = object) {
+        msg(DynamicTemplate("PosturesNotOnObj", object))
+      }
+      else {
+        StandUp
+      }
+    </script>
+  </command>
+  
+  <command name="cmd_get_off">
+    <pattern>get off;off</pattern>
+    <script>
+      if (game.pov.posture = null) {
+        msg(DynamicTemplate("PosturesNotOnAny", game))
+      }
+      else {
+        StandUp
+      }
+    </script>
+  </command>
+  
+  <command name="cmd_sit_on_ground">
+    <pattern type="string"><![CDATA[^(sit down|sit) on (the |)(ground|floor)$]]></pattern>
+    <scope>none</scope>
+    <script>
+      if (HasString(game.pov.parent, "posture_surface")) {
+        PostureGroundCommand ("sit", "PosturesOnSurface")
+      }
+      else {
+        PostureGroundCommand ("sit", "PosturesOnGround")
+      }
+    </script>
+  </command>
+
+  <command name="cmd_recline_on_ground">
+    <pattern type="string"><![CDATA[^(lie down|lie|recline) on (the |)(ground|floor)$]]></pattern>
+    <scope>none</scope>
+    <script>
+      if (HasString(game.pov.parent, "posture_surface")) {
+        PostureGroundCommand ("recline", "PosturesOnSurface")
+      }
+      else {
+        PostureGroundCommand ("recline", "PosturesOnGround")
+      }
+    </script>
+  </command>
+
+  
+  
+  
+
+  <function name="PostureCommand" parameters="posture">
+    <![CDATA[
+      obj = FindFurniture(posture, game.pov.parent)
+      if (not obj = null) {
+        Posture (posture, GetString(obj, posture + "onmsg"), obj)
+      }
+      else if (GetBoolean(game.pov.parent, "nositting")) {
+        if (HasString(game.pov.parent, "no" + posture + "msg")) {
+          msg(GetString(game.pov.parent, "no" + posture + "msg"))
+        }
+        else {
+          Posture (posture, DynamicTemplate("PosturesCannot" + CapFirst(posture) + "Here", game), null)
+        }
+      }
+      else if (HasString(game.pov.parent, "posture_surface")) {
+        PostureGroundCommand (posture, "PosturesOnSurface")
+      }
+      else {
+        PostureGroundCommand (posture, "PosturesOnGround")
+      }
+    ]]>
+  </function>
+  
+  <function name="PostureGroundCommand" parameters="posture, template" type="object">
+    Posture (posture, Replace(DynamicTemplate(template, game.pov.parent), "###", posture), null)
+  </function>
+  
+  
+  <function name="FindFurniture" parameters="posture, location" type="object">
+    <![CDATA[
+      furniture_list = FilterByType(GetDirectChildren(location), "furniture_type")
+      furniture_list = FilterByAttribute (furniture_list, "can" + posture + "on", true)
+      if (ListCount(furniture_list) > 0) {
+        // there is some furniture here.
+        // If any have this as the prefered posture, just go with the first one
+        l = FilterByAttribute (furniture_list, "preferred_posture", posture)
+        if (ListCount(l) > 0) {
+          return (ObjectListItem(l, 0))
+        }
+        return (ObjectListItem(furniture_list, 0))
+      }
+      else {
+        return (null)
+      }
+    ]]>
+  </function>
+  
+  
+  <function name="StandUp">
+    if (not game.pov.posture = null) {
+      if (game.pov.posture_object = null) {
+        game.pov.posture = null
+        msg (DynamicTemplate("PosturesStandUp", game))
+      }
+      else {
+        att = game.pov.posture + "offmsg"
+        if (HasString(game.pov.posture_object, att)) {
+          msg(Replace(GetString(game.pov.posture_object, att), "###", GetDefiniteName(game.pov.posture_object)))
+        }
+        else {
+          msg (DynamicTemplate("PosturesStandUp", game))
+        }
+        game.pov.posture_object = null
+        game.pov.posture = null
+      }
+      JS.updateLocation (CapFirst(GetDisplayName(game.pov.parent)))
+      PostureRemoveExit()
+    }
+  </function>
+  
+  
+  <function name="Posture" parameters="posture, message, obj">
+    // This just does the action; there is no checking it is allowed or anything except alreadsy done
+    if (game.pov.posture = posture and game.pov.posture_object = obj) {
+      msg(DynamicTemplate("PosturesAlreadyAre", game))
+    }
+    else {
+      if (not game.pov.posture_object = obj) {
+        StandUp()
+      }
+      game.pov.posture = posture
+      game.pov.posture_object = obj
+      if (obj = null) {
+        // !!!lang
+        JS.updateLocation (CapFirst(GetDisplayName(game.pov.parent)) + " (" + posture + ")")
+        msg (message)
+      }
+      else {
+        // !!!lang
+        JS.updateLocation (CapFirst(GetDisplayName(game.pov.parent)) + " (" + posture + " on " + ProcessText(GetDisplayName(obj)) + ")")
+        msg (Replace(message, "###", GetDefiniteName(obj)))
+      }
+      if (posture = "stand") {
+        PostureAddExit("down")
+      }
+      else {
+        PostureAddExit("up")
+      }
+    }
+  </function>
+  
+  
+  <function name="PostureAddExit" parameters="dir">
+    PostureRemoveExit()
+    o = GetObject("posture_exit_" + dir)
+    if (o = null) {
+      create exit ("posture_exit_" + dir, dir, game.pov.parent, game.pov.parent, dir + "direction")
+      o = GetObject("posture_exit_" + dir)
+      o.scenery = true
+      o.runscript = true
+      o.script => {
+        StandUp
+      }
+    }
+    else {
+      o.parent = game.pov.parent
+      o.to = game.pov.parent
+    }
+    s = GetExitByName (game.pov.parent, dir)
+    if (not s = null) {
+      o.old_exit = GetObject(s)
+      if (o.old_exit.visible) {
+        o.old_exit.visible = false
+      }
+      else {
+        o.old_exit = null
+      }
+    }
+  </function>
+  
+  
+  <function name="PostureRemoveExit">
+    o = GetObject("posture_exit_up")
+    if (not o = null) {
+      o.parent = null
+      if (not o.old_exit = null) {
+        o.old_exit.visible = true
+      }
+    }
+    o = GetObject("posture_exit_down")
+    if (not o = null) {
+      o.parent = null
+      if (not o.old_exit = null) {
+        o.old_exit.visible = true
+      }
+    }
+  </function>
+
+  
+  
+
+  <!--
+  Support for NPCs
+  -->  
+  
+  
+  
+
+
+  
+  
+  
+  
+  <command name="cmd_tell_to_recline">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (recline|lie down|lie)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, null, "recline")
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_sit">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (sit down|sit)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, null, "sit")
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_kneel">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (kneel down|kneel up|kneel)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, null, "kneel")
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_crouch">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (crouch down|crouch|squat down|squat)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, null, "crouch")
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_crawl">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (grovel|crawl|(get down on|get on|get down on his|get down on its|get down on her|get on his|get on its|get on her) (hands and knees|all fours))$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, null, "crawl")
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_get_on_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (get on|on) (?<object>.*)$]]></pattern>
+    <script>
+      if (not DoesInherit(object, "furniture_type")) {
+        // Not furniture
+        msg(DynamicTemplate("PosturesNotGetOn", objectnpc))
+      }
+      else {
+        NpcAskToPosture(objectnpc, object, object.preferred_posture)
+      }
+    </script>
+  </command>
+  
+
+  
+  <command name="cmd_tell_to_stand_on_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (stand on|stand|step on to|step on) (?<object>.*)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, object, "stand")
+    </script>
+  </command>
+  
+  <command name="cmd_tell_to_sit_on_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (sit down on|sit on|sit) (?<object>.*)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, object, "sit")
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_recline_on_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (recline on|recline|lie down on|lie on|lie) (?<object>.*)$]]></pattern>
+    <script>
+      NpcAskToPosture(objectnpc, object, "recline")
+    </script>
+  </command>
+  
+  <command name="cmd_tell_to_stand">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (stand up|stand) (?<object>.*)$]]></pattern>
+    <script>
+      NpcAskToStandUp(objectnpc, null)
+    </script>
+  </command>
+  
+  <command name="cmd_tell_to_get_off_obj">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (get off|off) (?<object>.*)$]]></pattern>
+    <script>
+      NpcAskToStandUp(objectnpc, object)
+    </script>
+  </command>
+  
+  <command name="cmd_tell_to_get_off">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (get off|off|get down)$]]></pattern>
+    <script>
+      NpcAskToStandUp(objectnpc, null)
+    </script>
+  </command>  
+  
+
+  
+
+
+
+
+  
+  
+  <function name="NpcAskToStandUp" parameters="npc, obj">
+    if (not DoesInherit(npc, "posturing_npc")) {
+      msg(DynamicTemplate("PosturesNotNpc", npc))
+    }
+    else if (not obj = null and not npc.posture_object = obj) {
+      msg (DynamicTemplate("PosturesNpcNotOnObj", obj))
+    }
+    else {
+      do (npc, "requeststandup", QuickParams("object", obj))
+    }
+  </function>
+  
+
+
+ 
+  <function name="NpcAskToPosture" parameters="npc, obj, posture">
+    if (not DoesInherit(npc, "posturing_npc")) {
+      msg(DynamicTemplate("PosturesNotNpc", npc))
+    }
+    else if (not obj = null and not DoesInherit(obj, "furniture_type")) {
+      // Not furniture
+      msg (DynamicTemplate("PosturesNotGetOn", obj))
+    }
+    else {
+      do (npc, "requestposture", QuickParams("object", obj, "option", posture))
+    }
+  </function>
+  
+
+  
+  
+  
+  <type name="posturing_npc">
+    
+
+    <requeststandup type="script">
+      do (this, "checkagreement", QuickParams("level", 12))
+      if (this.complies) {
+        if (this.posture = null) {
+          msg ("'I am!' says " + GetDefiniteName(this) + ".")
+        }
+        else if (this.posture_object = null) {
+          msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", standing up.")
+        }
+        else {
+          msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", getting off " + GetDefiniteName(this.posture_object) + ".")
+        }
+        this.posture_object = null
+        this.posture = null
+        this.listalias = this.alias
+      }
+    </requeststandup>
+
+    <requestposture type="script">
+      do (this, "checkagreement", QuickParams("level", 12))
+      if (this.complies) {
+        if (object = null) {
+          object = FindFurniture(option, this.parent)
+        }
+        if (this.posture = option and this.posture_object = object) {
+          msg ("'I am!' says " + GetDefiniteName(this) + ".")
+        }
+        else if (not object = null) {
+          do (this, "doposture", QuickParams("posture", option, "object", object))
+        }
+        else if (GetBoolean(game.pov.parent, "nositting")) {
+          if (HasString(game.pov.parent, "nositmsg")) {
+            msg(game.pov.parent.nosittingmsg)
+          }
+          else {
+            msg(DynamicTemplate("PosturesNpcCannot" + CapFirst(option) + "Here", this))
+          }
+        }
+        else {
+          do (this, "doposture", QuickParams("posture", option, "object", null))
+        }
+      }
+    </requestposture>
+    
+    <doposture type="script">
+      // Does the posture, no checking
+      s = "'" + this.yesmsg + "' says " + CapFirst(GetDefiniteName(this))
+      
+      if (not this.posture_object = object and not this.posture_object = null) {
+        s = s + ", getting off " + GetDefiniteName(this.posture_object)
+      }
+      s = s + ". "
+      if (not object = null) {
+        do (this, posture + "onobj", QuickParams("object", object, "s", s))
+      }
+      else {
+        do (this, posture + "onground", QuickParams("object", this.parent, "s", s))
+      }
+
+      this.posture = posture
+      this.posture_object = object
+      if (not object = null) {
+        this.listalias = this.alias + " (" + posture + " on " + ProcessText(GetDisplayName(object)) + ")"
+      }
+      else {
+        this.listalias = this.alias + " (" + posture + ")"
+      }
+    </doposture>
+    
+    
+    
+
+    
+    <!-- Postures -->
+    
+    <getoffobj type="script">
+      msg (CapFirst(GetDisplayName(this)) + " " + Replace(GetString(this.posture_object, att), "###", GetDefiniteName(this.posture_object)))
+    </getoffobj>
+
+    
+    <sitonobj type="script">
+      msg (CapFirst(GetDefiniteName(this)) + " sits on " + GetDefiniteName(object) + ".")
+    </sitonobj>
+    
+    <standonobj type="script">
+      msg (CapFirst(GetDefiniteName(this)) + " stands on " + GetDefiniteName(object) + ".")
+    </standonobj>
+    
+    <reclineonobj type="script">
+      msg (CapFirst(GetDefiniteName(this)) + " lies down on " + GetDefiniteName(object) + ".")
+    </reclineonobj>
+    
+    <sitonground type="script">
+      if (not IsDefined("s")) s = ""
+      if (HasString(object, "posture_surface")) {
+        msg (s + CapFirst(this.gender)) + " sits on " + object.posture_surface + ".")
+      }
+      else {
+        msg (s + CapFirst(this.gender) + " sits on the ground.")
+      }
+    </sitonground>
+    
+    <reclineonground type="script">
+      if (not IsDefined("s")) s = ""
+      if (HasString(object, "posture_surface")) {
+        msg (s + CapFirst(this.gender) + " lies down on " + object.posture_surface + ".")
+      }
+      else {
+        msg (s + CapFirst(this.gender) + " lies down on the ground.")
+      }
+    </reclineonground>
+    
+    <crouchonground type="script">
+      if (not IsDefined("s")) s = ""
+      if (HasString(object, "posture_surface")) {
+        msg (s + CapFirst(this.gender) + " crouches down on " + object.posture_surface + ".")
+      }
+      else {
+        msg (s + CapFirst(this.gender) + " crouches down on the ground.")
+      }
+    </crouchonground>
+    
+    <kneelonground type="script">
+      if (not IsDefined("s")) s = ""
+      if (HasString(object, "posture_surface")) {
+        msg (s + CapFirst(this.gender) + " kneels down on " + object.posture_surface + ".")
+      }
+      else {
+        msg (s + CapFirst(this.gender) + " kneels down on the ground.")
+      }
+    </kneelonground>
+    
+    <crawlonground type="script">
+      if (not IsDefined("s")) s = ""
+      if (HasString(object, "posture_surface")) {
+        msg (s + CapFirst(this.gender) + " gets down on " + object.posture_surface + " on " + this.possessive + " hands and knees.")
+      }
+      else {
+        msg (s + CapFirst(this.gender) + " gets down on ground on " + this.possessive + " hands and knees.")
+      }
+    </crawlonground>
+    
+  </type>  
+  
+  
+  
+  <type name="furniture_type">
+    <canstandon type="boolean">false</canstandon>
+    <stand type="script">
+      if (this.canstandon) {
+        Posture ("stand", this.standonmsg, this)
+      }
+      else {
+        msg(this.nostandmsg)
+      }
+    </stand>
+    <standonmsg>You step up on to ###.</standonmsg>
+    <standoffmsg>You step off ###.</standoffmsg>
+    <nostandmsg>You can't stand on ###.</nostandmsg>
+
+    <cansiton type="boolean">true</cansiton>
+    <sit type="script">
+      if (this.cansiton) {
+        Posture ("sit", this.sitonmsg, this)
+      }
+      else {
+        msg(this.nositgmsg)
+      }
+    </sit>
+    <sitonmsg>You sit on ###.</sitonmsg>
+    <sitoffmsg>You get off ###.</sitoffmsg>
+    <nositmsg>You can't sit on ###.</nositmsg>
+
+    <canreclineon type="boolean">false</canreclineon>
+    <recline type="script">
+      if (this.canreclineon) {
+        Posture ("recline", this.reclineonmsg, this)
+      }
+      else {
+        msg(this.noreclinemsg)
+      }
+    </recline>
+    <reclineonmsg>You lie down on ###.</reclineonmsg>
+    <reclineoffmsg>You get off ###.</reclineoffmsg>
+    <noreclinemsg>You can't recline on ###.</noreclinemsg>
+
+    <displayverbs type="listextend">Stand on;Sit on;Lie on</displayverbs>
+    <preferred_posture>sit</preferred_posture>
+  </type>
+  
+
+  
+  
+  <!-- Interface -->
+  <tab>
+    <parent>_ObjectEditor</parent>
+    <caption>Postures</caption>
+    <mustnotinherit>editor_room; defaultplayer</mustnotinherit>
+    
+    <control>
+      <controltype>dropdowntypes</controltype>
+      <caption>Furniture</caption>
+      <types>*=None; furniture_type=Furniture; posturing_npc=NPC</types>
+      <width>150</width>
+    </control>
+
+    
+    <control>
+      <controltype>dropdown</controltype>
+      <caption>Preferred posture</caption>
+      <attribute>preferred_posture</attribute>
+      <validvalues type="simplestringlist">sit;stand;recline</validvalues>
+      <freetext/>
+      <mustinherit>furniture_type</mustinherit>
+    </control>  
+    
+    
+    
+
+    <control>
+      <controltype>title</controltype>
+      <caption>Standing...</caption>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+      
+    <control>
+      <caption>Can stand on?</caption>
+      <controltype>checkbox</controltype>
+      <attribute>canstandon</attribute>
+      <width>200</width>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Stand on message</caption>
+      <attribute>standonmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>this.canstandon</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Get off message</caption>
+      <attribute>standoffmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>this.canstandon</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>No standing message</caption>
+      <attribute>nostandmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>not this.canstandon</onlydisplayif>
+    </control>
+
+    
+    
+    
+    <control>
+      <controltype>title</controltype>
+      <caption>Sitting...</caption>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+      
+    <control>
+      <caption>Can sit on?</caption>
+      <controltype>checkbox</controltype>
+      <attribute>cansiton</attribute>
+      <width>200</width>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Sit on message</caption>
+      <attribute>sitonmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>this.cansiton</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Get off message</caption>
+      <attribute>sitoffmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>this.cansiton</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>No sitting message</caption>
+      <attribute>nositmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>not this.cansiton</onlydisplayif>
+    </control>
+
+    
+    
+    
+
+
+
+
+    <control>
+      <controltype>title</controltype>
+      <caption>Reclining...</caption>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+      
+    <control>
+      <caption>Can recline on?</caption>
+      <controltype>checkbox</controltype>
+      <attribute>canreclineon</attribute>
+      <width>200</width>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Recline on msg</caption>
+      <attribute>reclineonmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>this.canreclineon</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Get off message</caption>
+      <attribute>reclineoffmsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>this.canreclineon</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>No reclining message</caption>
+      <attribute>noreclinemsg</attribute>
+      <mustinherit>furniture_type</mustinherit>
+      <onlydisplayif>not this.canreclineon</onlydisplayif>
+    </control>
+
+
+    
+    
+    <control>
+      <controltype>label</controltype>
+      <caption>Note: ### is used as a stand-in for this object (prepended by "the" if appropriate).</caption>
+      <mustinherit>furniture_type</mustinherit>
+    </control>
+    
+    
+    
+    <control>
+      <caption>NPC refuses ("degree" is an integer)</caption>
+      <controltype>script</controltype>
+      <attribute>refusal</attribute>
+      <mustinherit>posturing_npc</mustinherit>
+    </control>
+    
+    
+    
+    
+  </tab>
+  
+  
+  
+  <tab>
+    <parent>_ObjectEditor</parent>
+    <caption>Postures</caption>
+    <mustnotinherit>editor_object; defaultplayer</mustnotinherit>
+    
+    <control>
+      <controltype>checkbox</controltype>
+      <attribute>nositting</attribute>
+      <caption>Sitting/reclining prohibited</caption>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>No sitting msg</caption>
+      <attribute>nosittingmsg</attribute>
+      <onlydisplayif>GetBoolean(this, "nositting")</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>No reclining msg</caption>
+      <attribute>norecliningmsg</attribute>
+      <onlydisplayif>GetBoolean(this, "nositting")</onlydisplayif>
+    </control>
+
+    <control>
+      <controltype>textbox</controltype>
+      <caption>Surface name</caption>
+      <attribute>posture_surface</attribute>
+      <onlydisplayif>not GetBoolean(this, "nositting")</onlydisplayif>
+    </control>
+  </tab>
+    
+</library>

@@ -6,20 +6,22 @@
 
 
   <!--
-  EnhancedIt v1.0
+  EnhancedIt v1.1
   
-  Quest version: 5.7
+  Quest version: 5.8
   Written by: The Pixie, 2018
 
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/Conversations:-Library
   
-  If you use this with earlier versions of Quest it should still work fine, just test first!
+  This has been updated to work with Quest 5.8; may not work with earlier versions. The earlier version gave errors:
+  Error running script: Cannot foreach over 'Object: box' as it is not a list
   
   IMPORTANT
   You must add this line to youyr game start script:
   game.lastobjects = NewObjectDictionary()
   
+  Error running script: Error compiling expression 'obj.gender in game.lastobjects': InElement: Search argument type 'Object' is not a known collection type
   
   -->
 
@@ -110,7 +112,14 @@
           }
           if (result = null) {
             if (StartsWith(var, "object")) {
-              if (HasScript(game.pov.currentcommandpattern, "multipleobjects")) {
+              if (GetBoolean(game.pov.currentcommandpattern, "allow_all")) {
+                scope = FilterByAttribute(GetScope("object", "", "object"), "scenery", false)
+                game.pov.currentcommandpendingobjectscope = ListExclude(scope, FilterByAttribute(scope, "not_all", true))
+                game.pov.currentcommandpendingvariable = var
+                ResolveNameList (value, "object")
+                resolvinglist = true
+              }
+              else if (HasScript(game.pov.currentcommandpattern, "multipleobjects")) {
                 game.pov.currentcommandpendingobjectlist = NewObjectList()
                 game.pov.currentcommandpendingvariable = var
                 do (game.pov.currentcommandpattern, "multipleobjects")
@@ -166,6 +175,10 @@
           dictionary remove (game.lastobjects, obj.article)
         }
         dictionary add (game.lastobjects, obj.article, obj)
+        if (obj.possessive in game.lastobjects) {
+          dictionary remove (game.lastobjects, obj.possessive)
+        }
+        dictionary add (game.lastobjects, obj.possessive, obj)
       }
       if (not DictionaryContains(game.pov.currentcommandresolvedelements, "multiple")) {
         dictionary add (game.pov.currentcommandresolvedelements, "multiple", false)

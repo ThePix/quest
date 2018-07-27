@@ -1,0 +1,382 @@
+<library>
+
+  <!--
+  
+  Player can ask an NPC to:
+  pick things up
+  drop them
+  give them to the player or another NPC
+  go a certain direction
+  follow the player or wait
+  
+  Just give the NPC the inherited type "compliant_npc", and it should be good to go.
+  Modify the attributes as desired. In particular, the "compliance" attribute should 
+  be adjusted depending on how will the NPC will be to follow instructions (from
+  say 1 to 20).
+  
+  Each action has a "level", an NPC with a compliance of this or less will refuse
+  to do as he is asked.
+  
+  
+  -->
+ 
+
+  <!-- Used if the player asks an object that it not an NPC to do something -->
+	<dynamictemplate name="PosturesNotNpc">"Tell " + object.article + " all you want, " + object.gender + "'s not going to do anything."</dynamictemplate>
+  
+
+
+  
+  
+  <command name="go">
+    <pattern type="string"><![CDATA[^go to (?<exit>.*)$|^go (?<exit>.*)$|^(?<exit>north|east|south|west|northeast|northwest|southeast|southwest|in|out|up|down|n|e|s|w|ne|nw|se|sw|o|u|d)$]]></pattern>
+    <unresolved>[UnresolvedLocation]</unresolved>
+    <script>
+      old = game.pov.parent
+      if (exit.visible) {
+        if (exit.locked) {
+          msg (exit.lockmessage)
+        }
+        else if (exit.runscript) {
+          if (HasScript(exit, "script")) {
+            do (exit, "script")
+          }
+        }
+        else if (exit.lookonly) {
+          msg ([UnresolvedLocation])
+        }
+        else {
+          if (HasString(exit, "message")) {
+            if (not exit.message = "") {
+              if (game.clearscreenonroomenter) {
+                game.currentexitmessage = exit.message
+              }
+              else {
+                msg (exit.message)
+              }
+            }
+          }
+          game.pov.parent = exit.to
+        }
+      }
+      else {
+        msg ([UnresolvedLocation])
+      }
+      if (not old = game.pov.parent) {
+        foreach (npc, FilterByAttribute(AllObjects(), "following", game.pov)) {
+          do (npc, "followplayer")
+        }
+      }
+    </script>
+  </command>
+
+  
+
+
+
+  <!--
+  Support for NPCs
+  -->  
+  
+  
+  
+  <command name="cmd_tell_to_go_place">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) go to (?<exit>.*)$|^(?<objectnpc>.*), go (?<exit>.*)$]]></pattern>
+    <unresolved>You can't go there.</unresolved>
+    <script>
+      NpcGoExit(objectnpc, exit)
+    </script>
+  </command>  
+  <command name="cmd_tell_to_go_exit">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (go |)(?<exit>north|east|south|west|northeast|northwest|southeast|southwest|in|out|up|down|n|e|s|w|ne|nw|se|sw|o|u|d)$]]></pattern>
+    <unresolved>You can't go there.</unresolved>
+    <script>
+      NpcGoExit(objectnpc, exit)
+    </script>
+  </command>  
+  <function name="NpcGoExit" parameters="npc, exit">
+    // WARNING: This does not allow for doors that are stopped by scripts
+    if (not DoesInherit(npc, "compliant_npc")) {
+      msg(DynamicTemplate("PosturesNotNpc", npc))
+    }
+    else if (not exit.visible) {
+      msg ([UnresolvedLocation])
+    }
+    else {
+      do (npc, "requestgo", QuickParams("object", exit))
+    }
+  </function>
+  
+  
+  
+  
+  
+  <command name="cmd_tell_to_follow">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (follow me|follow)$]]></pattern>
+    <script>
+      if (not DoesInherit(objectnpc, "compliant_npc")) {
+        msg(DynamicTemplate("PosturesNotNpc", objectnpc))
+      }
+      else {
+        do (objectnpc, "requestfollow")
+      }        
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_wait">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (stop following|don't follow|do not follow|wait here|wait)( me|)$]]></pattern>
+    <script>
+      if (not DoesInherit(objectnpc, "compliant_npc")) {
+        msg(DynamicTemplate("PosturesNotNpc", objectnpc))
+      }
+      else {
+        do (objectnpc, "requestwait")
+      }        
+    </script>
+  </command>
+  
+
+
+  
+  <command name="cmd_tell_to_get_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (get|take|pick up) (?<object>.*)$]]></pattern>
+    <script>
+      if (not DoesInherit(objectnpc, "compliant_npc")) {
+        msg(DynamicTemplate("PosturesNotNpc", objectnpc))
+      }
+      else if (not ListContains(ScopeVisibleNotHeldForRoom(objectnpc.parent), object)) {
+        msg(WriteVerb(object, "is") + " not where someone can get " + object.article + ".")
+      }
+      else if (object = objectnpc) {
+        msg("You want " + objectnpc.article + " to pick " + object.article + "self up?")
+      }
+      else if (DoesInherit(object, "npc_type")) {
+        msg(CapFirst(objectnpc.gender) + " is not going to pick " + object.article + " up.")
+      }
+      else {
+        do(objectnpc, "requestget", QuickParams("object", object))
+      }
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_drop_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (drop) (?<object>.*)$]]></pattern>
+    <scope>none</scope>
+    <changecommandscope type="script">
+      foreach (npc, FilterByType(ScopeVisibleNotHeldForRoom (game.pov.parent), "compliant_npc")) {
+        foreach (obj, GetDirectChildren(npc)) {
+          list add (items, obj)
+        }
+      }
+    </changecommandscope>
+    <script>
+      if (not DoesInherit(objectnpc, "compliant_npc")) {
+        msg(DynamicTemplate("PosturesNotNpc", objectnpc))
+      }
+      else if (not object.parent = objectnpc) {
+        msg(WriteVerb(objectnpc, "do") + " not have " + object.article + ".")
+      }
+      else {
+        do(objectnpc, "requestdrop", QuickParams("object", object))
+      }
+    </script>
+  </command>
+
+  <command name="cmd_tell_to_give_object">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (give me|give) (?<object>.*)$]]></pattern>
+    <scope>none</scope>
+    <changecommandscope type="script">
+      foreach (npc, FilterByType(ScopeVisibleNotHeldForRoom (game.pov.parent), "compliant_npc")) {
+        foreach (obj, GetDirectChildren(npc)) {
+          list add (items, obj)
+        }
+      }
+    </changecommandscope>
+    <script>
+      NpcAskToGiveTo(objectnpc, object, game.pov)
+    </script>
+  </command>
+  <command name="cmd_tell_to_give_object2">
+    <pattern type="string"><![CDATA[^((tell|ask) (?<objectnpc>.*) to|(?<objectnpc>.*),) (give) (?<object>.*) to (?<object2>.*)$]]></pattern>
+    <scope>none</scope>
+    <changecommandscope type="script">
+      foreach (npc, FilterByType(ScopeVisibleNotHeldForRoom (game.pov.parent), "compliant_npc")) {
+        foreach (obj, GetDirectChildren(npc)) {
+          list add (items, obj)
+        }
+      }
+    </changecommandscope>
+    <script>
+      NpcAskToGiveTo(objectnpc, object, object2)
+    </script>
+  </command>
+  <function name="NpcAskToGiveTo" parameters="npc, object, subject">
+    if (not DoesInherit(npc, "compliant_npc")) {
+      msg(DynamicTemplate("PosturesNotNpc", npc))
+    }
+    else if (not object.parent = npc) {
+      msg(WriteVerb(npc, "do") + " not have " + object.article + ".")
+    }
+    else {
+      msg ("Giving " + object.name + " to " + subject.name)
+      do(npc, "requestgive", QuickParams("object", object, "subject", subject))
+    }
+  </function>
+
+
+
+  
+  
+  
+
+
+
+  
+
+  
+  
+  
+  
+  <type name="compliant_npc">
+    <compliance type="int">10</compliance>
+    <complies type="boolean">true</complies>
+    <yesmsg>Okay!</yesmsg>
+    <nomsg0>'I'd rather not.'</nomsg0>
+    <nomsg1>'I don't think so.'</nomsg1>
+    <nomsg2>'Not happening.'</nomsg2>
+    <nomsg3>'No way!'</nomsg3>
+    <nomsg4>'In your dreams, creep!'</nomsg4>
+
+    <!-- General -->
+
+    <checkagreement type="script">
+      // level is an int
+      // you could have compliance drop if degree is big enough - 
+      // the NPC is so horrified he is less likely to agree in future
+      if (not IsDefined("level")) level = 10
+      degree = (level - this.compliance) / 3
+      if (degree > 4) degree = 4
+      if (degree >= 0) {
+        this.complies = false
+        msg(GetString(this, "nomsg" + degree))
+      }
+      else {
+        this.complies = true
+      }
+    </checkagreement>
+    
+    
+    <requestget type="script">
+      do (this, "checkagreement", QuickParams("level", 12))
+      if (this.complies) {
+        if (HasScript(object, "npc_take")) {
+          do (object, "npc_take", QuickParams("npc", npc))
+        }
+        else if ((HasBoolean(object, "npc_take") and not GetBoolean(object, "npc_take")) or (not HasAttribute(object, "npc_take") and not GetBoolean(object, "take"))) {
+          msg ("'I can't get that,' says " + GetDefiniteName(this) + ".")
+        }
+        else {
+          msg ("'" + this.yesmsg + "' says " + CapFirst(GetDefiniteName(this)) + ", picking " + GetDefiniteName(object) + " up.")
+          object.parent = this
+        }
+      }
+    </requestget>
+
+    <requestdrop type="script">
+      do (this, "checkagreement", QuickParams("level", 12))
+      if (this.complies) {
+        if (HasScript(object, "npc_drop")) {
+          do (object, "npc_drop", QuickParams("npc", this))
+        }
+        else if ((HasBoolean(object, "npc_drop") and not GetBoolean(object, "npc_drop")) or (not HasAttribute(object, "npc_drop") and not GetBoolean(object, "drop"))) {
+          msg ("'I can't drop that,' says " + GetDefiniteName(this) + ".")
+        }
+        else {
+          msg ("'" + this.yesmsg + "' says " + CapFirst(GetDefiniteName(this)) + ", dropping " + GetDefiniteName(object) + ".")
+          object.parent = this.parent
+        }
+      }
+    </requestdrop>
+
+    <requestgive type="script">
+      do (this, "checkagreement", QuickParams("level", 12))
+      if (this.complies) {
+        if (HasScript(this, "give_" + object.name + "_to_" + subject.name)) {
+          do (this, "give_" + object.name + "_to_" + subject.name)
+        }
+        else if (HasScript(this, "give_" + object.name)) {
+          do (this, "give_" + object.name + "_to_" + subject.name, QuickParams("subject", subject))
+        }
+        else if ((HasBoolean(object, "npc_drop") and not GetBoolean(object, "npc_drop")) or (not HasAttribute(object, "npc_drop") and not GetBoolean(object, "drop"))) {
+          msg ("'I can't drop that,' says " + GetDefiniteName(this) + ".")
+        }
+        else {
+          if (subject.gender = "you") {
+            target = "you"
+          }
+          else {
+            target = GetDefiniteName(subject)
+          }
+          msg ("'" + this.yesmsg + "' says " + CapFirst(GetDefiniteName(this)) + ", giving " + GetDefiniteName(object) + " to " + target + ".")
+          object.parent = subject
+        }
+      }
+    </requestgive>
+
+    <requestgo type="script">
+      do (this, "checkagreement", QuickParams("level", 8))
+      if (this.complies) {
+        if (object.locked) {
+          msg ("'It's locked,' says " + GetDefiniteName(this) + ".")
+        }
+        else {
+          if (this.posture = null) {
+            msg ("'" + this.yesmsg + "' says " + CapFirst(GetDefiniteName(this)) + ", heading " + object.alias + ".")
+          }
+          else if (this.posture_object = null) {
+            msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", standing up and going " + object.alias + ".")
+          }
+          else {
+            msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", getting off " + GetDefiniteName(this.posture_object) + ", and walking " + object.alias + "wards.")
+          }
+          this.posture_object = null
+          this.posture = null
+          this.listalias = this.alias
+          this.parent = object.to
+        }
+      }
+    </requestgo>
+
+    <requestfollow type="script">
+      do (this, "checkagreement", QuickParams("level", 8))
+      if (this.complies) {
+        if (this.following = game.pov) {
+          msg ("'I am!' says " + GetDefiniteName(this) + ".")
+        }
+        else {
+          msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", looking expectantly at you.")
+          this.following = game.pov
+        }
+      }
+    </requestfollow>
+
+    <requestwait type="script">
+      do (this, "checkagreement", QuickParams("level", 20))
+      if (this.complies) {
+        if (this.following = null) {
+          msg ("'I am!' says " + GetDefiniteName(this) + ".")
+        }
+        else {
+          msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", tapping " + this.possessive + " foot.")
+          this.following = game.pov
+        }
+      }
+    </requestwait>
+
+    
+  </type>  
+  
+  
+  
+    
+</library>
