@@ -59,6 +59,13 @@
   The player can now give NPCs commands.
   https://github.com/ThePix/quest/wiki/Library:-NPCs
   Groups are properly set for gender, article and possessive (as long as "resetalias" is called).
+  
+  As of version 2.1 beta (with thanks to Doctor Agon)
+  Some bugs resolved - thanks to Doctor Agon for the fixes (and finding them).
+  Note that the messages printed when the player tries to sit or lie in a roomn where it is prohibited
+  have been changed, and if you were using a previous version, they will have disappeared.
+  They can be found on the Attributes tab, and copied across.
+  
   -->
 
 
@@ -87,7 +94,7 @@
   
 
   
-  
+  <template name="PosturesNotAllowedHere">You (or anyone else!) can't ### here!</template>
   
   
   
@@ -263,7 +270,7 @@
           msg(GetString(game.pov.parent, "no" + posture + "msg"))
         }
         else {
-          msg (DynamicTemplate("PosturesCannot" + CapFirst(posture) + "Here", game))
+          msg (Replace(Template("PosturesNotAllowedHere"), "###", posture))
         }
       }
       else if (HasString(game.pov.parent, "posture_surface")) {
@@ -279,7 +286,7 @@
   Allows author to add additional checks before allowing the player to move
   -->
   <function name="ExitCheck" parameters="exit" type="boolean">
-    return (false)
+    return (true)
   </function>
   
   <function name="PostureGroundCommand" parameters="posture, template" type="object">
@@ -558,7 +565,7 @@
     <script>
       old = game.pov.parent
       if (exit.visible) {
-        if (ExitCheck(exit)) {
+        if (not ExitCheck(exit)) {
           // nothing
         }
         else if (exit.locked) {
@@ -901,8 +908,27 @@
           msg ("'I am!' says " + GetDefiniteName(this) + ".")
         }
         else {
-          msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", looking expectantly at you.")
+          if (this.posture = null) {
+            msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) +", looking expectantly at you.")
+          }
+          else if (this.posture_object = null) {
+            msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", standing up, looking expectantly at you.")
+          }
+          else {
+            msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", getting off " + GetDefiniteName(this.posture_object) + ", looking expectantly at you.")
+          }
           this.following = game.pov
+          this.posture_object = null
+          this.posture = null
+          this.listalias = this.alias
+          // Checks to see if "actions" has been set up (meaning at least on action has been added) to avoid errors.
+          if (HasAttribute(this, "actions")) {
+            while (ListCount (this.actions) > 0) {
+              s = ListItem (this.actions, 0)
+              list remove (this.actions, s)
+              PrintIfDebug (this, "Deleted " + ToString(s))
+            }
+          }
         }
       }
     </requestfollow>
@@ -916,6 +942,17 @@
         else {
           msg ("'" + this.yesmsg + "' says " + GetDefiniteName(this) + ", tapping " + this.possessive + " foot.")
           this.following = game.pov
+          this.posture_object = null
+          this.posture = null
+          this.listalias = this.alias
+          // Checks to see if "actions" has been set up (meaning at least on action has been added) to avoid errors.
+          if (HasAttribute(this, "actions")) {
+            while (ListCount (this.actions) > 0) {
+              s = ListItem (this.actions, 0)
+              list remove (this.actions, s)
+              PrintIfDebug (this, "Deleted " + ToString(s))
+            }
+          }
         }
       }
     </requestwait>
@@ -941,6 +978,8 @@
     <requestposture type="script">
       do (this, "checkagreement", QuickParams("command", option, "object", object))
       if (this.complies) {
+
+
         if (object = null) {
           object = FindFurniture(option, this.parent)
         }
@@ -948,18 +987,32 @@
           msg ("'I am!' says " + GetDefiniteName(this) + ".")
         }
         else if (not object = null) {
-          do (this, "doposture", QuickParams("posture", option, "object", object))
+          if ((option = "sit" and object.cansiton = False) or (option = "stand" and object.canstandon = False) or (option = "recline" and object.canreclineon = False)) {
+            msg (CapFirst(GetDefiniteName(this)) + " can't " + option + " on " + GetDefiniteName(object) + ".")
+          }
+          else {
+            do (this, "doposture", QuickParams("posture", option, "object", object))
+          }
         }
         else if (GetBoolean(game.pov.parent, "nositting")) {
           if (HasString(game.pov.parent, "nositmsg")) {
             msg(game.pov.parent.nosittingmsg)
           }
           else {
-            msg(DynamicTemplate("PosturesNpcCannot" + CapFirst(option) + "Here", this))
+            msg(Replace(Template("PosturesNpcNotAllowedHere"), "###", option))
           }
         }
         else {
           do (this, "doposture", QuickParams("posture", option, "object", null))
+          this.listalias = this.alias
+          // Checks to see if "actions" has been set up (meaning at least on action has been added) to avoid errors.
+          if (HasAttribute(this, "actions")) {
+            while (ListCount (this.actions) > 0) {
+              s = ListItem (this.actions, 0)
+              list remove (this.actions, s)
+              PrintIfDebug (this, "Deleted " + ToString(s))
+            }
+          }
         }
       }
     </requestposture>
@@ -1076,7 +1129,7 @@
         Posture ("stand", this.standonmsg, this)
       }
       else {
-        msg(this.nostandmsg)
+        msg (Replace(this.nostandmsg, "###", GetDefiniteName(this)))
       }
     </stand>
     <standonmsg>You step up on to ###.</standonmsg>
@@ -1089,7 +1142,7 @@
         Posture ("sit", this.sitonmsg, this)
       }
       else {
-        msg(this.nositgmsg)
+        msg (Replace(this.nositmsg, "###", GetDefiniteName(this)))
       }
     </sit>
     <sitonmsg>You sit on ###.</sitonmsg>
@@ -1102,7 +1155,7 @@
         Posture ("recline", this.reclineonmsg, this)
       }
       else {
-        msg(this.noreclinemsg)
+        msg (Replace(this.noreclinemsg, "###", GetDefiniteName(this)))
       }
     </recline>
     <reclineonmsg>You lie down on ###.</reclineonmsg>
@@ -2139,14 +2192,14 @@
     <control>
       <controltype>textbox</controltype>
       <caption>No sitting msg</caption>
-      <attribute>nosittingmsg</attribute>
+      <attribute>nositmsg</attribute>
       <onlydisplayif>GetBoolean(this, "nositting")</onlydisplayif>
     </control>
 
     <control>
       <controltype>textbox</controltype>
       <caption>No reclining msg</caption>
-      <attribute>norecliningmsg</attribute>
+      <attribute>noreclinemsg</attribute>
       <onlydisplayif>GetBoolean(this, "nositting")</onlydisplayif>
     </control>
 
