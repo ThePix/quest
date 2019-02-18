@@ -7,7 +7,7 @@
 
 
   <!--
-  NpcLib v1.5
+  NpcLib v2.2
   
   Documentation here:
   http://docs.textadventures.co.uk/quest/independent_npcs.html
@@ -66,6 +66,8 @@
   have been changed, and if you were using a previous version, they will have disappeared.
   They can be found on the Attributes tab, and copied across.
   
+  Version 2.2 corrects a couple of bugs
+  
   -->
 
 
@@ -92,9 +94,7 @@
 	<dynamictemplate name="PosturesNpcCannotSitHere">"You (or anyone else!) can't sit here!"</dynamictemplate>
 	<dynamictemplate name="PosturesNpcCannotReclineHere">"You (or anyone else!) can't lie down here!"</dynamictemplate>
   
-
-  
-  <template name="PosturesNotAllowedHere">You (or anyone else!) can't ### here!</template>
+  <template name="PosturesNotAllowedHere">You (or anyone else) can't ### here!</template>
   
   
   
@@ -290,7 +290,12 @@
   </function>
   
   <function name="PostureGroundCommand" parameters="posture, template" type="object">
-    Posture (posture, Replace(DynamicTemplate(template, game.pov.parent), "###", posture), null)
+    if (game.pov.parent.nositting) {
+      msg(Replace(Template("PosturesNotAllowedHere"), "###", option))
+    }
+    else {
+      Posture (posture, Replace(DynamicTemplate(template, game.pov.parent), "###", posture), null)
+    }
   </function>
   
   
@@ -600,7 +605,7 @@
       }
       if (not old = game.pov.parent) {
         foreach (npc, FilterByAttribute(AllObjects(), "following", game.pov)) {
-          do (npc, "followplayer")
+          NpcFollow (npc, game.pov)
         }
       }
     </script>
@@ -999,7 +1004,7 @@
             msg(game.pov.parent.nosittingmsg)
           }
           else {
-            msg(Replace(Template("PosturesNpcNotAllowedHere"), "###", option))
+            msg(Replace(Template("PosturesNotAllowedHere"), "###", option))
           }
         }
         else {
