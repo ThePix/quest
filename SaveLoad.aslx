@@ -25,7 +25,7 @@
       
       
 saveLoad = {
-  debug:true,
+  debug:false,
 
   saveGame:function(title, filename, data) {
     if (!this.lsTest()) return;
