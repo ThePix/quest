@@ -7,9 +7,12 @@
 
   
   <!--
-  SaveLoad v1.0
-  Quest version: 5.6
-  Written by: The Pixie, 2016
+  SaveLoad v3.0 beta
+  Quest version: 5.8
+  Written by: The Pixie, 2016-19
+  
+  
+  Note that this is a beta-version. Test thoroughly before release!
   
   Tutorial and notes here:
   https://github.com/ThePix/quest/wiki/Save-and-Load-Library
@@ -17,97 +20,224 @@
 
 
   <object name="saveloaddata">
-    <saveloadtext><![CDATA[
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+    <saveloadscript><![CDATA[
       <script>
-        var secretPassphrase = 'UltraSecret Passphrase';
-       
-        function loadGame2() {
-          s = prompt("Copy-and-paste your save game code here", "");
-          if (s) {
-            decode(s);
-          }
-        }
-         
-        function decode(s) {
-          s = CryptoJS.AES.decrypt(s, secretPassphrase);
-          s = s.toString();
-          str = '';
-          for (i = 0; i < s.length; i += 2) {
-            s2 = s.charAt(i) + s.charAt(i + 1);
-            n = parseInt(s2, 16);
-            str += String.fromCharCode(n);
-          }
-          ASLEvent("LoadGame", str);
-        }
-     
-        var loadDialog = $("#load-dialog").dialog({
-          autoOpen: false,
-          width: 600,
-          height: 500,
-            buttons: {
-              Ok: function() {
-                  decode($('textarea#data').val());
-                  $(this).dialog("close");
-              }
-          }
-        });
+      
+      
+saveLoad = {
+  debug:true,
 
-        var saveDialog = $("#save-dialog").dialog({
-          autoOpen: false,
-          width: 600,
-          height: 500,
-            buttons: {
-              Ok: function() {
-                  $(this).dialog("close");
-              },
-          }
-        });
+  saveGame:function(title, filename, data) {
+    if (!this.lsTest()) return;
+    var currentdate = new Date();
+    var s = title + "|";
+    s += currentdate.toLocaleString() + "|";
+    if (!this.debug) {
+      localStorage.setItem(title + ": " + filename, s + data);
+    }
+    else {
+      this.lastSave = s + data
+    }
+    addText("Saved: " + filename + "<br/>");
+  },
 
-        function loadGame() {
-          loadDialog.dialog("open");
+  loadGame:function(title, filename) {
+    if (!this.lsTest()) return;
+    if (!this.debug) {
+      var data = localStorage.getItem(title + ": " + filename);
+    }
+    else {
+      var currentdate = new Date();
+      data = this.lastSave;
+    }
+    if (data === null) {
+      addText("Failed to find file: " + filename);
+      return;
+    }
+    var arr = data.split("|");
+    arr.shift();
+    arr.shift();
+    ASLEvent("LoadGame", arr.join("|"));
+  },
+
+  deleteGame:function(title, filename) {
+    if (!this.lsTest()) return;
+    if (!this.debug) {
+      localStorage.removeItem(title + ": " + filename);
+    }
+    addText("Deleted:" + filename);
+  },
+
+  dirGame:function(title) {
+    if (!this.lsTest()) return;
+    var s = "<table class=\"meta\"><tr><th>Filename</th><th>Timestamp</th></tr>";
+    if (!this.debug) {
+      $.each(localStorage, function(key, value){
+        var regex = new RegExp("^" + title + ": ");
+        var name = key.replace(regex, "");
+        if (regex.test(key)) {
+          var arr = value.split("|");
+          s += "<tr><td>" + name + "</td>";
+          s += "<td>" + arr[1] + "</td></tr>";
         }
+      });
+    }
+    s += "</table>";
+    addText(s);
+  },
 
-        function saveGame(s) {
-          str = CryptoJS.AES.encrypt(s, secretPassphrase);
-          $('textarea#savedata').val(str);
-          saveDialog.dialog("open");
-        }
-
+  lsTest:function() {
+    if (this.debug) return true;
+    if (platform === "desktop") {
+      alert("Cannot save (localStorage not available). Save and load via the File menu instead.");
+      return false;
+    }
+    var test = 'test';
+    try {
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch(e) {
+      alert("Cannot save (localStorage not available).");
+      return false;
+    }
+  },
+};
       </script>
-      <div id="load-dialog">
-        <p>Please paste your save game here:</p>
-        <textarea id="data" rows="13" cols="49"></textarea>
-      </div>
-      <div id="save-dialog">
-        <p>Please copy-and-paste your save game into a text file from here:</p>
-        <textarea id="savedata" rows="13" cols="49"></textarea>
-      </div>
-    ]]></saveloadtext>
+    ]]></saveloadscript>
   </object>
  
  
-  <command name="savecmd">
-    <pattern>save</pattern>
+ 
+  <!--          COMMANDS                    -->
+ 
+  <command name="savehelp">
+    <pattern type="string">^(save|load|restore)$</pattern>
     <script>
-      JS.eval ("saveGame('" + SaveGame() + "');")
+      msg ("To save or load a game, please give a filename: SAVE [filename] or LOAD [filename]. Your can also DELETE [filename] (you will not e asked for confirmation; use with care!). To see a list of saved files, do DIR.")
+      msg ("Files are saved in your browsers \"localStorage\", so will only be available on this browser on this computer.")
     </script>
   </command>
- 
+  
+  <command name="savecmd">
+    <pattern>save #text#</pattern>
+    <script>
+      s = SaveGame()
+      if (not s = null) {
+        JS.eval ("saveLoad.saveGame('" + game.gamename + "', '" + text + "', '" + s + "');")
+      }
+    </script>
+  </command>
  
   <command name="loadcmd">
-    <pattern>load</pattern>
+    <pattern>load #text#;restore #text#</pattern>
     <script>
-      JS.eval ("loadGame();")
+      JS.eval ("saveLoad.loadGame('" + game.gamename + "', '" + text + "');")
+    </script>
+  </command>
+ 
+  <command name="deletecmd">
+    <pattern>del #text#;delete #text#</pattern>
+    <script>
+      msg("Deleting")
+      JS.eval ("saveLoad.deleteGame('" + game.gamename + "', '" + text + "');")
+    </script>
+  </command>
+ 
+  <command name="dircmd">
+    <pattern>dir;ls</pattern>
+    <script>
+      JS.eval ("saveLoad.dirGame('" + game.gamename + "');")
     </script>
   </command>
  
  
-  <function name="SaveLoadInit">
-    OutputTextNoBr (saveloaddata.saveloadtext)
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  <!--          INITIALISATION                    -->
+
+  <!-- 
+  Take the opportunity to do some quick tests that this is set up right.
+  -->
+  <function name="SaveLoadInit" type="boolean">
+    allowedTypes = Split("object;list;int;integer;boolean;flag;dictionaryoflists")
+    if (not HasAttribute(game, "saveloadatts")) {
+      msg("Error: Save/load not properly implemented - no game.saveloadatts attribute set.")
+      msg("")
+      return (false)
+    }
+    if (not TypeOf(game, "saveloadatts") = "stringlist") {
+      msg("Error: Save/load not properly implemented - the game.saveloadatts attribute must be a string list.")
+      msg("")
+      return (false)
+    }
+    foreach (s, game.saveloadatts) {
+      if (StartsWith(s, "player:parent:")) {
+        msg("Error: Save/load not properly implemented - the game.saveloadatts list includes player.parent.")
+        msg("")
+        return (false)
+      }
+      arr = Split(s, ".")
+      if (not ListCount(arr) = 3) {
+        msg("Error: Save/load not properly implemented - the game.saveloadatts list includes a badly formatted attribute; " + s + " (should have three parts separated by dots).")
+        msg("")
+        return (false)
+      }
+      if (not ListContains(allowedTypes, arr[2])) {
+        msg("Error: Save/load not properly implemented - the game.saveloadatts list includes a badly formatted attribute; " + s + " (third part should be one of " + Join(allowedTypes, ", ") + "; not " + arr[2] + ").")
+        msg("")
+        return (false)
+      }
+    }
+
+    foreach (obj, AllObjects()) {
+      if (not obj = player) {
+        list add (game.saveloadatts, obj.name + ".parent.object")
+      }
+    }
+    AddAtts(game, game.saveloadints, "int")
+    AddAtts(game, game.saveloadflags, "flag")
+    AddAtts(player, player.saveloadints, "int")
+    AddAtts(player, player.saveloadflags, "flag")
+    list add (game.saveloadatts, "game.textprocessor_seen.dictionaryoflists")
+    list add (game.saveloadatts, "game.roomsvisited.string")
+    list add (game.saveloadatts, "game.exitslocked.string")
+    list add (game.saveloadatts, "game.exitsnotvisible.string")
+    list add (game.saveloadatts, "game.itemslocked.string")
+    list add (game.saveloadatts, "game.itemsopen.string")
+    list add (game.saveloadatts, "game.itemsworn.string")
+    list add (game.saveloadatts, "game.itemshidden.string")
+    list add (game.saveloadatts, "game.itemsdisplay.string")
+    list add (game.saveloadatts, "game.clonedata.string")
+    list add (game.saveloadatts, "player.current_location.object")
+
+    JS.addScript (saveloaddata.saveloadscript)
+    return (true)
   </function>
- 
- 
+  <function name="AddAtts" parameters="obj, values, typename">
+    if (not values = null) {
+      values = Split(values, ";")
+      for (i, 0, ListCount(values) - 1) {
+        list add (game.saveloadatts, obj.name + "." + values[i] + "." + typename)
+      }
+    }
+  </function>
+  
+
+  
+
+  
+  <!--          OVER-RIDABLE                    -->
+  
   <function name="PreSave">
   </function>
  
@@ -116,11 +246,18 @@
  
   <function name="PostLoad">
   </function>
- 
+
+  
+  
+  
+  
+  
+  
+  <!--          LOAD/SAVE                    -->
+  
+  
   <function name="LoadGame" parameters="s">
-    if (s = "") {
-      NoLoadGameFound
-    }
+    msg("LoadGame")
     PreLoad
     pos = 0
     foreach (val, Split(s, ";")) {
@@ -128,12 +265,8 @@
       obj = GetObject(StringListItem (ary, 0))
       att = StringListItem (ary, 1)
       type = LCase(StringListItem (ary, 2))
-      //msg("------------------")
-      //msg("ary: " + ary)
-      //msg("val: " + val)
       if (val = "" or TypeOf(val) = "null") {
-        // Do nothing, this attribute has not been set
-        //msg("No value")
+        set (obj, att, null)
       }
       else if (type = "object") {
         set (obj, att, GetObject(val))
@@ -146,43 +279,72 @@
           set (obj, att, ToInt(val))
         }
         else {
-          msg("Load error: Cannot convert \"" + val + "\" to an integer for " + StringListItem(game.saveloadatts, pos))
+          error("Load error: Cannot convert \"" + val + "\" to an integer for " + StringListItem(game.saveloadatts, pos))
         }
       }
       else if (type = "boolean" or type = "flag") {
         set (obj, att, LCase(val) = "true")
       }
       else if (type = "dictionaryoflists") {
-        set (obj, att, _DictSplit(val, 0))
+        set (obj, att, SuperSplit(val))
       }
       else {
         set (obj, att, Replace(val, "@@@semicolon@@@", ";"))
       }
       pos = pos + 1
     }
+
+    SetAll(game.roomsvisited, "visited", true)
+    SetAll(game.exitslocked, "locked", true)
+    SetAll(game.exitsnotvisible, "visible", false)
+    SetAll(game.itemslocked, "locked", true)
+    SetAll(game.itemsopen, "isopen", true)
+    SetAll(game.itemsworn, "worn", true)
+    SetAll(game.itemshidden, "hidden", true)
+    SetAll(game.itemsdisplay, "display", true)
+    ol = FilterByNotAttribute(AllObjects(), "prototype", null)
+    while (not ListCount(ol) = 0) {
+      o = ObjectListItem(ol, 0)
+      destroy(o.name)
+      ol = FilterByNotAttribute(AllObjects(), "prototype", null)
+    }
+    SetCloneData(game.clonedata)
+
     PostLoad
     player.parent = player.current_location
+    msg("Game loaded")
   </function>
   
-  
-  <function name="NoLoadGameFound">
-    msg("No save game data found.")
-    finish
-  </function>
   
 
   <function name="SaveGame" type="string">
+    // First collect the standard data, and add to the game object
     player.current_location = player.parent
-    PreSave
+    // For rooms
+    game.roomsvisited = ListWith(AllObjects(), "visited", true)
+    // For exits
+    game.exitslocked = ListWith(AllExits(), "locked", true)
+    game.exitsnotvisible = ListWith(AllExits(), "visible", false)
+    // For containers
+    game.itemslocked = ListWith(AllObjects(), "locked", true)
+    game.itemsopen = ListWith(AllObjects(), "isopen", true)
+    // For wearables
+    game.itemsworn = ListWith(AllObjects(), "worn", true)
+    // For conversations
+    game.itemshidden = ListWith(AllObjects(), "hidden", true)
+    game.itemsdisplay = ListWith(AllObjects(), "display", true)
+    
+    game.clonedata = GetCloneData()
+
     data = NewStringList()
-    foreach (att, game.saveloadatts) {
-      ary = Split(att, ".")
+    foreach (attri, game.saveloadatts) {
+      ary = Split(attri, ".")
       obj = GetObject(StringListItem (ary, 0))
       if (not ListCount(ary) = 3) {
-        msg("Save error: Badly formatted entry: " + att)
+        error("Save error: Badly formatted entry: " + attri)
       }
       else if (obj = null) {
-        msg("Save error: Failed to find an object called: " + StringListItem (ary, 0))
+        error("Save error: Failed to find an object called: " + StringListItem (ary, 0))
       }
       else {
         att = StringListItem (ary, 1)
@@ -192,120 +354,193 @@
           list add (data, "")
         }
         else if (type = "object") {
+          if (not TypeOf(val) = "object") error("Save: Expected " + attri + ", found " + TypeOf(val))
           list add (data, val.name)
         }
         else if (type = "list") {
+          if (not TypeOf(val) = "stringlist") error("Save: Expected " + attri + ", found " + TypeOf(val))
           list add (data, Join(val, "|"))
         }
         else if (type = "int" or type = "integer") {
+          if (not TypeOf(val) = "int") error("Save: Expected " + attri + ", found " + TypeOf(val))
           list add (data, "" + val)
         }
         else if (type = "boolean" or type = "flag") {
+          if (not TypeOf(val) = "boolean") error("Save: Expected " + attri + ", found " + TypeOf(val))
           list add (data, "" + val)
         }
         else if (type = "dictionaryoflists") {
           list add (data, SuperJoin(val))
         }
         else if (type = "string") {
+          if (not TypeOf(val) = "string") error("Save: Expected " + attri + ", found " + TypeOf(val))
           list add (data, Replace(val, ";", "@@@semicolon@@@"))
         }
         else {
-          msg("Save error: Invalid type for " + StringListItem (ary, 0) + ": " + type)
+          error("Save error: Invalid type for " + StringListItem (ary, 0) + ": " + type)
         }
       }
     }
+
+    PreSave
+    //msg("here3")
     return (Join(data, ";"))
   </function>  
  
+
+ 
+
+ 
+
+
+
   <!--
-  Will join a diction or list into a string. The dictionary or list can itself contain
-  further lists and dictionaries, which in turn can contain even more.  
+  ListWith returns a string naming each object or exit in the given list,
+  that has the given attribute set to the given value.
+  Names are separated by vertical bars.
+  
+  SetAll is the reverse; every object (or exit) named in the string
+  (separated by vertical bars) will have
+  the given attribute set to the given value.
+  If s is null (which can happen!) or empty does nothing.
+  Tested.
   -->  
-  <function name="SuperJoin" parameters="col" type="string">
-    return (_SuperJoin(col, 0))
+  <function name="ListWith" parameters="list, att, val" type="string">
+    l = FilterByAttribute(list, att, val)
+    return (Join(ObjectListToStringList(l, "name"), "|"))
   </function>
-  
-  
-  
-  
-  
-  
-  
+  <function name="SetAll" parameters="s, att, val">
+    if (not s = null and not s = "") {
+      l = Split(s, "|")
+      foreach (s, l) {
+        o = GetObject(s)
+        if (o = null) error ("Failed to find object: " + s)
+        set (o, att, val)
+      }
+    }
+  </function>
+    
  
-  <function name="_SuperJoin" parameters="col, n" type="string">
-    if (TypeOf(col) = "dictionary") {
-      sublist = NewStringList()
-      foreach (key, col) {
-        if (not TypeOf(key) = "string") {
-          msg("Error; key is a " + TypeOf(key))
-          msg(key)
+
+ 
+ 
+ 
+  <function name="GetCloneData" type="string">
+    ol = FilterByNotAttribute(AllObjects(), "prototype", null)
+    sl = NewStringList()
+    msg("About to do clones")
+    foreach (o, ol) {
+      s = o.name + "/" + o.prototype.name
+      if (HasAttribute(o, "saveloadatts")) {
+        foreach (att, o.saveloadatts) {
+          s = s + "/" + GetAttribute(o, att)
         }
-        val = DictionaryItem(col, key)
-        s2 = _SuperJoin(val, n + 1)
-        s = key + "~" + n + s2
-        list add (sublist, s)
-      }
-      return(Join(sublist, "|" + n))
-    }
-    else if (TypeOf(col) = "list") {
-      sublist = NewStringList()
-      foreach (s, col) {
-        list add(sublist, _SuperJoin(s, n + 1))
-      }
-      return(Join(sublist, "|" + n))
-    }
-    else if (TypeOf(col) = "stringlist") {
-      return(Join(col, "|" + n))
-    }
-    else {
-      return ("" + col)
-    }
-  </function>
- 
- 
-  <function name="_DictSplit" parameters="str, n" type="dictionary">
-    dict = NewDictionary()
-    list = Split(str, "|" + n)
-    foreach (s, list) {
-      sublist = Split(s, "~" + n)
-      key = StringListItem(sublist, 0)
-      value = StringListItem(sublist, 1) // here
-      if (Instr(value, "|" + (n+1)) = 0) {
-        // Not a collection, just use the value
-        dictionary add(dict, key, value)
-      }
-      else if (Instr(s, "~" + (n+1)) = 0) {
-        // A list
-        dictionary add(dict, key, _ListSplit(value, n + 1))
+        list add (sl, s)
       }
       else {
-        // A dict
-        dictionary add(dict, key, _DictSplit(value, n + 1))
+        error("Clone prototype, " + o.prototype.name + ", has no 'saveloadatts' attribute.")
       }
+    }
+    return (Join(sl, "|"))
+  </function>
+ 
+  <function name="SetCloneData" parameters="str">
+    if (not str = null) {
+      foreach (s, Split(str, "|")) {
+        l = Split(s, "/")
+        prototype = GetObject(StringListItem(l, 1))
+        o = CloneObject(prototype)
+        if (not o.name = StringListItem(l, 0)) error ("Name mismatch in clones: " + o.name + " is not " + StringListItem(l, 0))
+        list remove (l, prototype.name)
+        list remove (l, o.name)
+        for (i, 0, ListCount(l) - 1) {
+          val = StringListItem(l, i)
+          att = StringListItem(o.saveloadatts, i)
+          if (val = "") {
+            set (o, att, null)
+          }
+          else if (IsInt(val)) {
+            set (o, att, ToInt(val))
+          }
+          else if (val = "True") {
+            set (o, att, true)
+          }
+          else if (val = "False") {
+            set (o, att, false)
+          }
+          else {
+            set (o, att, val)
+          }
+        }
+      }
+    }
+  </function>
+
+
+
+
+ 
+  <!--
+  SuperJoin will join a dictionary of lists into a string.
+  The dictionary use ~ as equals, and | as separators,
+  the lists use # as separators.
+  SuperSplit goes the other way (using ToStringList)
+  -->  
+  <function name="SuperJoin" parameters="col" type="string">
+    sublist = NewStringList()
+    foreach (key, col) {
+      val = DictionaryItem(col, key)
+      s2 = Join(ToStringList(val), "#")
+      s = key + "~" + s2
+      list add (sublist, s)
+    }
+    return(Join(sublist, "|"))
+  </function>  
+  <function name="SuperSplit" parameters="str" type="dictionary">
+    dict = NewDictionary()
+    list = Split(str, "|")
+    foreach (s, list) {
+      sublist = Split(s, "~")
+      key = StringListItem(sublist, 0)
+      value = StringListItem(sublist, 1) // here
+      dictionary add(dict, key, Split(value, "#"))
     }
     return(dict)
   </function>
-
-
-  <function name="_ListSplit" parameters="str, n" type="list">
-    l = NewList()
-    list = Split(str, "|" + n)
-    foreach (s, list) {
-      if (Instr(s, "|" + (n+1)) = 0) {
-        // Not a collection, just use the value
-        list add(l, s)
-      }
-      else if (Instr(s, "~" + (n+1)) = 0) {
-        // A list
-        list add(l, _ListSplit(value, n + 1))
-      }
-      else {
-        // A dict
-        list add(l, _DictSplit(value, n + 1))
-      }
+  <function name="ToStringList" parameters="col" type="stringlist">
+    sl = NewStringList()
+    foreach (el, col) {
+      list add (sl, ToString(el))
     }
-    return(l)
+    return(sl)
   </function>
+  
+  
+  <!--
+  Over-ride built-in to prohibit cloning objects without saveloadatts attribute
+  -->
+  <function name="CloneObject" parameters="object" type="object">
+    if (not HasAttribute(object, "saveloadatts")) {
+      error ("Cannot clone an object, " + object.name + ", with no 'saveloadatts' set, as it will not save properly.")
+      return (null)
+    }
+    if (not TypeOf(object, "saveloadatts") = "stringlist") {
+      error ("Cannot clone an object, " + object.name + ", as 'saveloadatts' is not a string list.")
+      return (null)
+    }
 
+    newobject = ShallowClone(object)
+    if (not HasString(object, "alias")) {
+      newobject.alias = object.name
+    }
+    if (not HasAttribute(object, "prototype")) {
+      newobject.prototype = object
+    }
+    foreach (o, GetDirectChildren(object)) {
+      o2 = CloneObject (o)
+      MoveObject (o2, newobject)
+    }
+    return (newobject)
+  </function>
 
 </library>
