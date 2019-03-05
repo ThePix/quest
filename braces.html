@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Quest Bracket Check</title>
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    style-src 'unsafe-inline';
+    script-src 'unsafe-inline' 'self' https://ajax.googleapis.com;"
+  >
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script>
+  "use strict"
+  
+  function process() {
+    const textArray = $("#text").val().split("msg ");
+    
+    $("#errormsg").empty();
+    for (let i = 0; i < textArray.length; i++) {
+      tp.analyse(textArray[i], "{", "}", "brace");
+      tp.analyse(textArray[i], "(", ")", "bracket");
+      tp.analyse(textArray[i], "<", ">", "angle");
+    }
+  }
+  
+  
+const tp = {};
+
+tp.analyse = function(str, start, end, name) {
+  const res = tp.processText(str, start, end, name);
+  if (typeof res === "string") {
+    if (res.indexOf(start) !== -1) {
+      tp.reportError(res, end);
+    }
+  }
+}
+
+tp.processText = function(str, start, end) {
+  const s = tp.findFirstToken(str, start, end);
+  // No token found, so we are done
+  if (s === true) return str;
+  // No start found for last token, so failed
+  if (s === false) return false;
+
+  // Remove last token from the string, and go again
+  str = str.replace(start + s + end, "---");
+  str = tp.processText(str, start, end);
+  return str;
+};
+
+// Find the first token. We look for the end symbol,
+// then find the start back from that, so
+// we get nested.
+tp.findFirstToken = function (s, start, end) {
+  const endpoint = s.indexOf(end);
+  if (endpoint === -1) { return true; }
+  
+  const startpoint = s.lastIndexOf(start, endpoint);
+  if (startpoint === -1) {
+    tp.reportError(s, start);
+    return false;
+  }
+  return s.substring(startpoint + 1, endpoint);
+};
+
+tp.reportError = function (s, chr) {
+    $("#errormsg").append("<li>Failed to find " + chr + " in: " + s + "</li>");
+}
+
+  
+  </script>
+</head>
+
+<body>
+<h4>Quest Bracket Check</h4>
+
+<textarea cols="160" rows="24" id="text" placeholder="Paste your code here" autofocus></textarea>
+<br/>
+<input type="submit" onclick="process();" />
+<br/>
+<br/>
+<h5>Possible errors</h5>
+<ul id="errormsg"></ul>
+<br/>
+<h5>Notes</h5>
+<p>
+The text processor in Quest allows you to create some complex strings, but if you miss a curly brace, it can lead to some weird errors that are difficult to spot. Paste your code into this box to have it check that you have as many start braces as end braces. If there is an error, the output will have properly formatted sections replaced by ---, which might help you find the error.
+</p>
+<p>
+As well as curly braces, it will also try to match parentheses and angle brackets.
+</p>
+<p>
+I have designed this with text output in mind, but it will probably work on Quest code too, and you should be able paste a whole script in. The text will be broken up into chunks at each msg (if you have "msg" in your text, you may have problems!). It will only find one error per bracket type per chunk.
+</p>
+<p>
+It is not that clever and some things will confuse it. For example, if you use greater than or less than in a text processor "if" directive, it will think that is an angle bracket and complain it is not matched. You could delete the offending greater than or less than symbols after pasting into this page to get around that.
+</p>
+</body>
+</html>
