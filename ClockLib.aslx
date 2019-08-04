@@ -125,7 +125,7 @@
   -->
   <function name="IncTime"><![CDATA[
     on ready {
-      game_clock.time = game_clock.time + 1
+      game_clock.time = game_clock.time + 10
       //msg("game_clock.time = " + game_clock.time)
       //msg("game_clock.event = " + game_clock.event)
       game_clock.minutes = game_clock.time % 60
